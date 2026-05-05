@@ -25,6 +25,7 @@
     .character-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; text-align: center; }
     .character-title { color: #f6c85f; font-weight: 700; margin-bottom: 10px; text-align: center; }
     .character-desc { color: #d9d0bc; line-height: 1.55; }
+    .hero-exp { margin-top: 8px; padding: 5px 7px; border-radius: 6px; background: rgba(246,200,95,.13); color: #ffe08a; font-size: 13px; font-weight: 900; text-align: center; }
     .primary-btn, .secondary-btn, .small-btn { border-radius: 8px; padding: 12px 18px; color: #1d2229; background: #f6c85f; font-weight: 800; }
     .primary-btn:disabled { opacity: .45; cursor: not-allowed; }
     .secondary-btn { background: #d8e2ef; }
@@ -39,6 +40,7 @@
     .stat-label { font-size: 12px; color: #b9c3cf; }
     .stat-value { margin-top: 3px; font-size: 18px; font-weight: 800; }
     .hearts { color: #ff6f87; letter-spacing: 1px; }
+    .hp-hearts { display: inline-block; font-size: clamp(18px, 4.5vw, 28px); line-height: 1.05; letter-spacing: 0; white-space: nowrap; vertical-align: middle; }
     .history-panel { padding: 10px 12px; border-radius: 8px; background: #111820; border: 1px solid #3b4654; }
     .history-title { margin: 0 0 6px; font-size: 15px; font-weight: 900; color: #f6c85f; }
     .history-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
@@ -65,6 +67,9 @@
     .cell .door-avatar img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
     .door-avatar.door-fallback::before { content: "出口"; }
     .exit-badge { position: absolute; right: 2px; bottom: 2px; min-width: 24px; padding: 2px 4px; border-radius: 999px; background: #10351d; color: #fff; font-size: clamp(9px, 1.8vw, 12px); line-height: 1.1; font-weight: 900; text-align: center; border: 1px solid rgba(255,255,255,.8); box-shadow: 0 2px 5px rgba(0,0,0,.25); z-index: 3; }
+    .item-icon { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(18px, 5.4vw, 30px); z-index: 2; pointer-events: none; line-height: 1; text-shadow: 0 2px 5px rgba(0,0,0,.25); }
+    .item-heart .item-icon { animation: itemPulse 2.2s ease-in-out infinite; }
+    .item-chest .item-icon { animation: itemShine 2.8s ease-in-out infinite; }
     .monster-avatar { width: 72%; height: 72%; border-radius: 7px; overflow: hidden; background: linear-gradient(145deg, #7a432d, #4c2f27); border: 1px solid rgba(255,255,255,.75); display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 0 2px 6px rgba(0,0,0,.25); z-index: 1; }
     .monster-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .cell .monster-avatar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 72%; height: 72%; max-width: 78%; max-height: 78%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -78,6 +83,7 @@
     .side-panel { display: flex; flex-direction: column; gap: 10px; }
     .controls, .debug-panel, .rules-box { padding: 10px; border-radius: 8px; background: #111820; border: 1px solid #3b4654; }
     .controls h3, .debug-panel h3, .rules-box h3 { margin: 0 0 8px; font-size: 16px; }
+    .control-play { display: grid; grid-template-columns: 1fr; gap: 8px; align-items: center; }
     .dpad { width: 190px; margin: 6px auto 10px; display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 54px); gap: 6px; justify-content: center; position: relative; z-index: 20; touch-action: none; pointer-events: auto; }
     .dpad button { border-radius: 8px; background: #d8e2ef; color: #1e2730; font-size: 24px; font-weight: 900; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; pointer-events: auto; }
     .dpad .up { grid-column: 2; grid-row: 1; }
@@ -85,22 +91,36 @@
     .dpad .right { grid-column: 3; grid-row: 2; }
     .dpad .down { grid-column: 2; grid-row: 3; }
     .button-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .skill-card { width: 100%; padding: 9px 10px; border-radius: 8px; background: linear-gradient(145deg, #f6c85f, #d99d39); color: #1d2229; font-weight: 900; text-align: center; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .skill-card.locked { opacity: .55; background: #d8e2ef; color: #3b4654; }
+    .skill-card.used { opacity: .62; background: #b9c3cf; color: #293643; }
+    .skill-name { display: block; font-size: 15px; line-height: 1.15; }
+    .skill-state { display: block; margin-top: 2px; font-size: 12px; line-height: 1.15; }
+    .skill-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; margin: 12px 0; }
+    .skill-option { min-height: 42px; border-radius: 8px; background: #f6c85f; color: #1d2229; font-weight: 900; }
+    .skill-option:disabled { opacity: .45; background: #c8c8c8; color: #555; cursor: not-allowed; }
     .debug-panel { display: none; font-size: 13px; color: #d9d0bc; max-height: 420px; overflow: auto; white-space: pre-wrap; }
     .debug-panel.show { display: block; }
     .rules-box { display: none; color: #d9d0bc; line-height: 1.55; }
     .rules-box.show { display: block; }
-    .boss-screen { align-items: center; justify-content: center; background: radial-gradient(circle at 50% 0, #7a344b 0, #352b49 34%, #111820 72%); }
-    .boss-panel { width: min(760px, 100%); padding: 20px; border-radius: 8px; background: rgba(17,24,32,.94); border: 2px solid #f6c85f; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.38); }
-    .boss-row { display: flex; gap: 22px; justify-content: center; align-items: center; flex-wrap: wrap; margin: 16px 0; }
-    .boss-row .avatar { width: 132px; height: 132px; margin: 0 auto 8px; }
+    .boss-screen { align-items: flex-start; justify-content: center; background: radial-gradient(circle at 50% 0, #7a344b 0, #352b49 34%, #111820 72%); }
+    .boss-panel { width: min(760px, 100%); margin-top: 2vh; padding: 16px; border-radius: 8px; background: rgba(17,24,32,.94); border: 2px solid #f6c85f; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.38); }
+    .boss-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; justify-content: center; align-items: start; margin: 10px 0; }
+    .boss-side-card { min-width: 0; display: grid; justify-items: center; gap: 4px; }
+    .boss-row .avatar { width: 112px; height: 112px; margin: 0 auto 4px; }
     .boss-name { font-size: 28px; font-weight: 900; margin: 8px 0 2px; }
     .boss-title { color: #f6c85f; font-weight: 800; }
-    .boss-line { margin: 14px auto; max-width: 620px; color: #e5dcc9; line-height: 1.7; }
+    .boss-vital-label { margin-top: 2px; font-size: 13px; color: #d9d0bc; font-weight: 800; }
+    .boss-line { margin: 10px auto; max-width: 620px; color: #e5dcc9; line-height: 1.45; }
     .modal-backdrop { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.62); z-index: 50; }
     .modal-backdrop.show { display: flex; }
     .modal { width: min(620px, 100%); max-height: 90vh; overflow: auto; padding: 18px; border-radius: 8px; background: #f7f1e2; color: #202832; box-shadow: 0 18px 50px rgba(0,0,0,.35); touch-action: pan-y; }
     .modal h2 { margin: 0 0 10px; font-size: 24px; }
     .modal p { line-height: 1.65; }
+    .question-subtitle { margin: 0 0 8px; color: #6b4c16; font-weight: 800; }
+    .boss-combat-status { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 8px; }
+    .boss-status-card { padding: 6px 8px; border-radius: 8px; background: #fff8e8; border: 1px solid #ead8ad; text-align: center; line-height: 1.2; }
+    .boss-status-card strong { display: block; margin-bottom: 3px; font-size: 12px; color: #5c4220; }
     .options { display: grid; gap: 8px; margin: 12px 0; }
     .option-btn { width: 100%; padding: 12px; border-radius: 8px; background: #e3d7bd; color: #202832; text-align: left; font-weight: 700; }
     .option-btn:disabled { cursor: default; opacity: .85; }
@@ -148,6 +168,8 @@
     @keyframes flashGood { 0% { background: #293643; } 35% { background: #3bbf72; color: #fff; } 100% { background: #293643; } }
     @keyframes flashBad { 0% { transform: translateX(0); background: #293643; } 25% { transform: translateX(-3px); background: #743040; } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } 100% { transform: translateX(0); background: #293643; } }
     @keyframes monsterFloat { 0%, 100% { transform: translate(-50%, -50%) translateY(0) scale(1); } 50% { transform: translate(-50%, -50%) translateY(-2px) scale(1.035); } }
+    @keyframes itemPulse { 0%, 100% { transform: scale(1); opacity: .95; } 50% { transform: scale(1.1); opacity: 1; } }
+    @keyframes itemShine { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.06); filter: brightness(1.18); } }
     @keyframes battleFadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes avatarHit { 0%,100% { transform: translateX(0); filter: brightness(1); } 25% { transform: translateX(-5px); filter: brightness(.75); } 55% { transform: translateX(4px); } }
     @keyframes avatarDefeat { 0% { opacity: 1; transform: scale(1); filter: brightness(1.2); } 40% { opacity: 1; transform: scale(1.08); filter: brightness(1.8); } 100% { opacity: .18; transform: scale(.65); filter: brightness(.75); } }
@@ -155,24 +177,26 @@
     @keyframes resultPop { from { transform: scale(.96); opacity: .3; } to { transform: scale(1); opacity: 1; } }
     .monster-avatar-idle { animation: monsterFloat 3s ease-in-out infinite; will-change: transform; }
     @media (prefers-reduced-motion: reduce) {
-      .monster-avatar-idle, .cell.player, .cell.exit-ready, .battle-overlay.show, .avatar-hit, .avatar-defeat, .avatar-flash, .flash-good, .flash-bad { animation: none !important; }
+      .monster-avatar-idle, .item-icon, .cell.player, .cell.exit-ready, .battle-overlay.show, .avatar-hit, .avatar-defeat, .avatar-flash, .flash-good, .flash-bad { animation: none !important; }
     }
     @media (max-width: 820px) {
       html, body, .app { min-height: 100dvh; }
       .screen { padding: 8px; min-height: 100dvh; }
       .start-screen { height: 100dvh; align-items: stretch; justify-content: flex-start; overflow: hidden; }
       .start-panel { height: 100%; display: flex; flex-direction: column; min-height: 0; }
-      .title { font-size: clamp(24px, 7vw, 32px); margin-bottom: 4px; }
-      .subtitle { max-width: 100%; margin-bottom: 8px; font-size: 13px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .title { font-size: clamp(22px, 6.4vw, 30px); margin-bottom: 2px; line-height: 1.12; }
+      .subtitle { max-width: 100%; margin-bottom: 6px; font-size: 12px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
       .character-grid { grid-template-columns: 1fr; }
-      .character-grid { flex: 1; min-height: 0; overflow: auto; gap: 7px; margin: 6px 0 8px; padding-right: 1px; }
-      .character-card { min-height: 0; display: grid; grid-template-columns: 62px 1fr; column-gap: 10px; align-items: center; padding: 8px; border-radius: 7px; }
-      .character-card .avatar { grid-row: 1 / span 3; width: 58px; height: 58px; margin: 0; }
-      .character-name { text-align: left; font-size: 17px; margin: 0; line-height: 1.15; }
-      .character-title { text-align: left; font-size: 12px; margin: 2px 0; line-height: 1.2; }
-      .character-desc { font-size: 12px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .character-grid { flex: 1; min-height: 0; overflow: auto; gap: 5px; margin: 4px 0 6px; padding-right: 1px; }
+      .character-card { min-height: 0; display: grid; grid-template-columns: 56px 1fr; column-gap: 8px; align-items: center; padding: 6px 7px; border-radius: 7px; }
+      .character-card.selected { transform: none; box-shadow: inset 0 0 0 1px rgba(246,200,95,.35); }
+      .character-card .avatar { grid-row: 1 / span 3; width: 54px; height: 54px; margin: 0; }
+      .character-name { text-align: left; font-size: 15px; margin: 0; line-height: 1.08; }
+      .character-title { text-align: left; font-size: 11px; margin: 1px 0; line-height: 1.15; }
+      .character-desc { font-size: 11px; line-height: 1.18; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .hero-exp { grid-column: 2; margin-top: 2px; padding: 2px 5px; font-size: 10px; line-height: 1.15; text-align: left; }
       .start-actions { margin-top: auto; padding-top: 4px; }
-      .start-actions .primary-btn { width: 100%; padding: 11px 14px; }
+      .start-actions .primary-btn { width: 100%; padding: 10px 14px; }
       .game-screen { height: 100dvh; min-height: 100dvh; gap: 5px; padding: 5px; overflow: hidden; }
       .main-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 5px; }
       .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
@@ -200,18 +224,28 @@
       .side-panel { padding-bottom: 0; gap: 5px; flex-shrink: 0; }
       .controls { position: static; z-index: 30; pointer-events: auto; padding: 5px; border-radius: 7px; }
       .controls h3 { display: none; }
-      .dpad { width: 150px; margin: 0 auto 4px; grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(3, 38px); gap: 4px; }
+      .control-play { grid-template-columns: 150px minmax(96px, 1fr); gap: 6px; }
+      .dpad { width: 150px; margin: 0; grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(3, 38px); gap: 4px; }
       .dpad button { font-size: 20px; border-radius: 7px; }
+      .skill-card { min-height: 74px; padding: 8px 6px; display: grid; align-content: center; }
+      .skill-name { font-size: 13px; }
+      .skill-state { font-size: 10px; }
+      .skill-options { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
       .small-btn { padding: 6px 7px; font-size: 11px; border-radius: 7px; }
       .button-row { gap: 4px; }
       .debug-panel.show { max-height: 34dvh; }
       .boss-screen { height: 100dvh; min-height: 100dvh; padding: 8px; overflow: hidden; }
-      .boss-panel { padding: 12px; max-height: calc(100dvh - 16px); overflow: auto; }
-      .boss-row { gap: 12px; margin: 8px 0; }
-      .boss-row .avatar { width: 82px; height: 82px; }
-      .boss-name { font-size: 22px; margin-top: 4px; }
-      .boss-title { font-size: 13px; }
-      .boss-line { margin: 8px auto; font-size: 13px; line-height: 1.45; }
+      .boss-panel { margin-top: 0; padding: 10px; max-height: calc(100dvh - 16px); overflow: auto; }
+      .boss-row { gap: 8px; margin: 4px 0 6px; }
+      .boss-row .avatar { width: 74px; height: 74px; }
+      .boss-name { font-size: 19px; margin: 2px 0 0; line-height: 1.1; }
+      #bossPlayerName { font-size: 17px !important; line-height: 1.1; }
+      .boss-title { font-size: 11px; line-height: 1.15; }
+      .boss-vital-label { font-size: 11px; margin-top: 0; }
+      .hp-hearts { font-size: clamp(18px, 6vw, 24px); line-height: 1; }
+      .boss-line { margin: 6px auto; font-size: 12px; line-height: 1.32; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .boss-combat-status { grid-template-columns: 1fr; gap: 5px; margin-bottom: 6px; }
+      .boss-status-card { padding: 5px 7px; }
       .modal-backdrop { padding: 8px; }
       .modal { padding: 12px; max-height: 92dvh; width: min(560px, 100%); }
       .modal h2 { font-size: 20px; margin-bottom: 8px; }
@@ -278,11 +312,17 @@
         <aside class="side-panel">
           <div class="controls">
             <h3>移动</h3>
-            <div class="dpad">
-              <button class="up" data-dir="up" aria-label="上">↑</button>
-              <button class="left" data-dir="left" aria-label="左">←</button>
-              <button class="right" data-dir="right" aria-label="右">→</button>
-              <button class="down" data-dir="down" aria-label="下">↓</button>
+            <div class="control-play">
+              <div class="dpad">
+                <button class="up" data-dir="up" aria-label="上">↑</button>
+                <button class="left" data-dir="left" aria-label="左">←</button>
+                <button class="right" data-dir="right" aria-label="右">→</button>
+                <button class="down" data-dir="down" aria-label="下">↓</button>
+              </div>
+              <button id="skillBtn" class="skill-card" type="button">
+                <span class="skill-name">技能</span>
+                <span class="skill-state">Lv.2 解锁</span>
+              </button>
             </div>
             <div class="button-row">
               <button id="restartBtn" class="small-btn secondary-btn">重新开始</button>
@@ -302,15 +342,18 @@
     <section id="bossScreen" class="screen boss-screen">
       <div class="boss-panel">
         <div class="boss-row">
-          <div>
+          <div class="boss-side-card">
             <div id="bossAvatar" class="avatar"></div>
             <div class="boss-name">暗算魔王</div>
             <div class="boss-title">数字地宫的最终守门人</div>
+            <div class="boss-vital-label">Boss 血量</div>
+            <div id="bossHp" class="hp-hearts"></div>
           </div>
-          <div>
+          <div class="boss-side-card">
             <div id="bossPlayerAvatar" class="avatar"></div>
             <div id="bossPlayerName" style="font-size:20px;font-weight:900;"></div>
-            <div id="bossLife" class="hearts" style="font-size:22px;margin-top:6px;"></div>
+            <div class="boss-vital-label">玩家生命</div>
+            <div id="bossLife" class="hp-hearts hearts"></div>
           </div>
         </div>
         <p class="boss-line">你已经走到这里了，但只有真正掌握数字规律的人，才能离开我的地宫！</p>
@@ -329,10 +372,14 @@
 
   <script>
     const characters = [
-      { id: 1, name: "陈小铭", title: "热血旋风少年", desc: "从来没有人见过他失败，因为他从来不会失败。", img: "hero1.png" },
-      { id: 2, name: "王大蔚", title: "冷眼天才少年", desc: "从来没有人见过他成功，因为他偷偷成功。", img: "hero2.png" },
-      { id: 3, name: "王巨蓝", title: "神秘智慧导师", desc: "从来没有人见过他哭，因为他不爱哭。", img: "hero3.png" }
+      { id: 1, name: "陈小铭", title: "热血旋风少年", desc: "从来没有人见过他失败，因为他从来不会失败。", img: "hero1.png", skillName: "影分身之术" },
+      { id: 2, name: "王大蔚", title: "冷眼天才少年", desc: "从来没有人见过他成功，因为他偷偷成功。", img: "hero2.png", skillName: "天照" },
+      { id: 3, name: "王巨蓝", title: "神秘智慧导师", desc: "从来没有人见过他哭，因为他不爱哭。", img: "hero3.png", skillName: "雷切" }
     ];
+
+    const progressStorageKey = "digitalDungeonHeroProgress";
+    const levelExpThresholds = [0, 10, 30, 60, 100, 150, 210, 280, 360, 450];
+    let heroProgress = createDefaultHeroProgress();
 
     const levels = [
       { level: 1, size: 7, monsterCount: 5, pathMin: 3, pathMax: 4, targetMin: 20, targetMax: 40 },
@@ -610,11 +657,17 @@
       player: { x: 1, y: 1 },
       exit: { x: 0, y: 0 },
       monsters: [],
+      items: [],
       hiddenPath: [],
       operationHistory: [],
       levelResults: [],
       usedQuestionIds: [],
       pendingEncounter: null,
+      runExp: 0,
+      levelRewardClaimed: [false, false, false],
+      bossRewardClaimed: false,
+      expSettled: false,
+      skillUsedThisLevel: false,
       debugVisible: false,
       rulesVisible: false,
       historyExpanded: false,
@@ -625,7 +678,11 @@
       active: false,
       question: null,
       answered: false,
-      attempts: 0
+      attempts: 0,
+      hp: 3,
+      maxHp: 3,
+      mistakes: 0,
+      defeated: false
     };
 
     const inputState = {
@@ -634,6 +691,7 @@
     };
 
     function initGame() {
+      heroProgress = loadHeroProgress();
       renderCharacterCards();
       document.getElementById("startBtn").addEventListener("click", startRun);
       document.getElementById("restartBtn").addEventListener("click", () => showConfirmRestart());
@@ -642,6 +700,7 @@
         gameState.debugVisible = !gameState.debugVisible;
         render();
       });
+      document.getElementById("skillBtn").addEventListener("click", handleSkillButtonClick);
       document.getElementById("bossStartBtn").addEventListener("click", startBossChallenge);
       document.querySelector(".history-title").addEventListener("click", () => {
         gameState.historyExpanded = !gameState.historyExpanded;
@@ -688,6 +747,7 @@
       const grid = document.getElementById("characterGrid");
       grid.innerHTML = "";
       characters.forEach(ch => {
+        const expInfo = formatHeroExp(ch.id);
         const card = document.createElement("button");
         card.className = "character-card";
         card.addEventListener("click", () => selectCharacter(ch.id));
@@ -696,6 +756,7 @@
           <div class="character-name">${ch.name}</div>
           <div class="character-title">${ch.title}</div>
           <div class="character-desc">${ch.desc}</div>
+          <div class="hero-exp">${expInfo}</div>
         `;
         card.dataset.characterId = ch.id;
         grid.appendChild(card);
@@ -764,9 +825,13 @@
       gameState.operationHistory = [];
       gameState.levelResults = [];
       gameState.usedQuestionIds = [];
+      resetRunExpState();
       gameState.historyExpanded = false;
       bossState.active = false;
       bossState.attempts = 0;
+      bossState.mistakes = 0;
+      bossState.hp = bossState.maxHp;
+      bossState.defeated = false;
       startLevel(0);
       showTutorialIfNeeded();
     }
@@ -777,6 +842,7 @@
       gameState.currentNumber = 1;
       gameState.steps = 0;
       gameState.pendingEncounter = null;
+      gameState.skillUsedThisLevel = false;
       gameState.operationHistory = gameState.operationHistory.filter(item => item.level !== index + 1);
       gameState.levelResults[index] = null;
       generateLevel(getActiveLevels()[index]);
@@ -793,6 +859,7 @@
       gameState.map[gameState.player.y][gameState.player.x] = 0;
       gameState.map[gameState.exit.y][gameState.exit.x] = 0;
       gameState.monsters = spawnMonsters(config, result.path);
+      gameState.items = spawnItems(config);
     }
 
     function generateSolvablePath(config) {
@@ -928,6 +995,49 @@
       return monsters;
     }
 
+    function spawnItems(config) {
+      const items = [];
+      const occupied = new Set([
+        key(gameState.player.x, gameState.player.y),
+        key(gameState.exit.x, gameState.exit.y),
+        ...gameState.monsters.map(m => key(m.x, m.y))
+      ]);
+      const itemTypes = shuffle(["heart", "chest"]);
+      itemTypes.forEach(type => {
+        const pos = findItemCell(occupied, config);
+        if (!pos) return;
+        occupied.add(key(pos.x, pos.y));
+        items.push({
+          id: `${type}-${Date.now()}-${Math.random()}`,
+          type,
+          x: pos.x,
+          y: pos.y,
+          used: false
+        });
+      });
+      return items;
+    }
+
+    function findItemCell(occupied, config) {
+      const reachable = getReachableCells();
+      const cells = [];
+      reachable.forEach(k => {
+        const [x, y] = k.split(",").map(Number);
+        if (!insideMap(x, y) || gameState.map[y][x] === 1 || occupied.has(k)) return;
+        const nearStart = Math.abs(x - gameState.player.x) + Math.abs(y - gameState.player.y) <= 2;
+        const nearExit = Math.abs(x - gameState.exit.x) + Math.abs(y - gameState.exit.y) <= 1;
+        if (nearStart || nearExit) return;
+        cells.push({ x, y });
+      });
+      if (cells.length) return randomItem(cells);
+      const fallback = [];
+      reachable.forEach(k => {
+        const [x, y] = k.split(",").map(Number);
+        if (insideMap(x, y) && gameState.map[y][x] === 0 && !occupied.has(k)) fallback.push({ x, y });
+      });
+      return fallback.length ? randomItem(fallback) : null;
+    }
+
     function selectDistributedKeyPositions(count, used, config) {
       const regions = shuffle(getLevelRegions(config.size).slice());
       const minRegions = config.level === 1 ? 2 : (config.level === 2 ? 3 : 4);
@@ -977,7 +1087,8 @@
       const occupied = new Set([
         key(gameState.player.x, gameState.player.y),
         key(gameState.exit.x, gameState.exit.y),
-        ...gameState.monsters.map(m => key(m.x, m.y))
+        ...gameState.monsters.map(m => key(m.x, m.y)),
+        ...gameState.items.map(item => key(item.x, item.y))
       ]);
       const pos = findFreeCell(occupied);
       if (!pos) return;
@@ -1011,10 +1122,30 @@
       }
       gameState.player = next;
       gameState.steps++;
+      const item = itemAt(next.x, next.y);
+      if (item) {
+        handleItemPickup(item);
+      }
       if (next.x === gameState.exit.x && next.y === gameState.exit.y) {
         checkExit(prev);
       }
       render();
+    }
+
+    function handleItemPickup(item) {
+      gameState.items = gameState.items.filter(entry => entry.id !== item.id);
+      if (item.type === "heart") {
+        if (gameState.lives < 5) {
+          gameState.lives += 1;
+          showToast("获得爱心，生命 +1！");
+        } else {
+          showToast("生命已满，爱心化作祝福！");
+        }
+        return;
+      }
+      if (item.type === "chest") {
+        showChestModal();
+      }
     }
 
     function handleMonsterEncounter(monster, prev, next) {
@@ -1151,12 +1282,13 @@
           `<div class="battle-scroll">解析：${question.exp.replace(/\n/g, "<br>")}</div>` +
           `生命 -1，剩余生命：${hearts(Math.max(0, gameState.lives))}。`;
         if (gameState.lives <= 0) {
+          const expHtml = buildExpSettlementHtml(settleRunExp());
           showBattleScene({
             type: "monster",
             result: "lose",
             title: "挑战失败！",
             subtitle: "生命已归零",
-            detailHtml: `${detail}<br>整局挑战失败。`,
+            detailHtml: `${detail}<br>整局挑战失败。<br>${expHtml}`,
             enemyLabel: `${monster.label} 怪物`,
             enemyOp: monster.label,
             actions: [
@@ -1203,10 +1335,13 @@
         return;
       }
       const result = saveLevelResult();
+      const reward = claimLevelReward(gameState.levelIndex);
       const passBody =
         `本关步数：${result.steps}<br>` +
         `推荐最短运算步数：${result.solutionLength}<br>` +
-        `本关评级：${result.rating} 级。`;
+        `本关评级：${result.rating} 级。<br>` +
+        `本关经验：${reward > 0 ? "+2" : "+0"}<br>` +
+        `本局累计经验：+${gameState.runExp}`;
       if (gameState.levelIndex < 2) {
         showResultModal("关卡通过", `第 ${gameState.levelIndex + 1} 关通过！<br>${passBody}<br><br>下一关当前数字会重置为 1，生命继续保留。`, [
           { text: "进入下一关", action: () => { closeModal(); startLevel(gameState.levelIndex + 1); } }
@@ -1222,15 +1357,29 @@
       bossState.active = true;
       bossState.question = null;
       bossState.answered = false;
+      bossState.hp = bossState.maxHp;
+      bossState.attempts = 0;
+      bossState.mistakes = 0;
+      bossState.defeated = false;
       gameState.screen = "boss";
       render();
     }
 
     function startBossChallenge() {
-      if (bossState.answered) return;
+      if (!bossState.active || bossState.hp <= 0 || gameState.lives <= 0) return;
+      if (bossState.question && !bossState.answered) return;
       bossState.attempts++;
+      bossState.answered = false;
       bossState.question = generateBossQuestion();
-      showQuestionModal(bossState.question, answerBossQuestion, "最终试炼", "答对这道题，才能离开数字地宫。");
+      showQuestionModal(
+        bossState.question,
+        answerBossQuestion,
+        "最终试炼",
+        `<div class="boss-combat-status">
+          <div class="boss-status-card"><strong>Boss 血量</strong><span class="hp-hearts">${bossHearts(bossState.hp)}</span></div>
+          <div class="boss-status-card"><strong>玩家生命</strong><span class="hp-hearts hearts">${hearts(gameState.lives)}</span></div>
+        </div>`
+      );
     }
 
     function answerBossQuestion(optionIndex) {
@@ -1238,34 +1387,48 @@
       bossState.answered = true;
       closeModal();
       if (optionIndex === q.answer) {
+        bossState.hp = Math.max(0, bossState.hp - 1);
+        const defeated = bossState.hp <= 0;
+        bossState.defeated = defeated;
         showBattleScene({
           type: "boss",
           result: "win",
-          title: "最终试炼成功！",
-          subtitle: "暗算魔王被智慧之光击败！",
-          detailHtml: "数字地宫的大门终于打开。",
+          title: defeated ? "最终试炼成功！" : "攻击成功！",
+          subtitle: defeated ? "暗算魔王被智慧之光击败！" : "暗算魔王失去 1 点生命！",
+          detailHtml: defeated
+            ? `Boss 血量已清零：${bossHearts(bossState.hp)}<br>数字地宫的大门终于打开。`
+            : `Boss 剩余血量：${bossHearts(bossState.hp)}<br>继续解题，打败最终守门人。`,
           enemyLabel: "暗算魔王",
           enemySub: "数字地宫的最终守门人",
+          enemyEffect: defeated ? "defeat" : "hit",
           actions: [
-            { text: "查看胜利成绩", action: () => { closeBattleOverlay(); showFinalVictory(q); } }
+            defeated
+              ? { text: "最终胜利", action: () => { closeBattleOverlay(); showFinalVictory(q); } }
+              : { text: "继续战斗", action: () => { closeBattleOverlay(); bossState.question = null; bossState.answered = false; render(); startBossChallenge(); } }
           ]
         });
       } else {
+        bossState.mistakes++;
+        gameState.lives = Math.max(0, gameState.lives - 1);
+        const failed = gameState.lives <= 0;
+        const expHtml = failed ? `<br>${buildExpSettlementHtml(settleRunExp())}` : "";
         const detail =
-          `还差一点，再回到地宫里磨炼你的计算力吧！<br>` +
+          `${failed ? "暗算魔王挡住了出口，再修炼一次吧！" : "挑战失败！生命 -1。"}<br>` +
           `正确答案：${optionLabel(q.answer)}. ${formatOption(q.options[q.answer])}<br>` +
           `<div class="battle-scroll">解析：${q.exp.replace(/\n/g, "<br>")}</div>` +
-          `你将回到第 3 关重新挑战，生命值不会减少。`;
+          `玩家剩余生命：${hearts(gameState.lives)}<br>Boss 剩余血量：${bossHearts(bossState.hp)}${expHtml}`;
         showBattleScene({
           type: "boss",
           result: "lose",
-          title: "最终试炼失败！",
-          subtitle: "暗算魔王守住了出口",
+          title: failed ? "挑战失败！" : "挑战失败！",
+          subtitle: failed ? "生命已归零" : "生命 -1",
           detailHtml: detail,
           enemyLabel: "暗算魔王",
           enemySub: "数字地宫的最终守门人",
           actions: [
-            { text: "返回第 3 关", action: () => { closeBattleOverlay(); returnToLevelThree(); } }
+            failed
+              ? { text: "回到开始界面", action: () => { closeBattleOverlay(); resetToStart(); } }
+              : { text: "继续战斗", action: () => { closeBattleOverlay(); bossState.question = null; bossState.answered = false; render(); startBossChallenge(); } }
           ]
         });
       }
@@ -1279,9 +1442,11 @@
     }
 
     function showFinalVictory(q) {
+      claimBossReward();
+      const expSummary = settleRunExp();
       const finalRating = getFinalRating();
       const totalSteps = getTotalSteps();
-      const bossOnce = bossState.attempts === 1 ? "是" : "否";
+      const bossPerfect = bossState.mistakes === 0 ? "完美通过" : `答错 ${bossState.mistakes} 次`;
       const ratingsText = gameState.levelResults.map(r => r ? r.rating : "-").join(" / ");
       const body =
         `<div class="victory-hero"><div class="avatar">${avatarHtml(gameState.selectedCharacter, "英雄")}</div><div><strong>${gameState.selectedCharacter.name}</strong><br><strong>最终评级：${finalRating}</strong><br>挑战年级：${getGradeLabel()}<br>暗算魔王被击败，数字地宫的大门打开。</div></div>` +
@@ -1289,7 +1454,8 @@
         `<div class="summary-item"><strong>三关评级</strong><br>${ratingsText}</div>` +
         `<div class="summary-item"><strong>总步数</strong><br>${totalSteps}</div>` +
         `<div class="summary-item"><strong>剩余生命</strong><br>${hearts(gameState.lives)}</div>` +
-        `<div class="summary-item"><strong>Boss</strong><br>${bossOnce === "是" ? "一次通过" : "多次挑战"}</div>` +
+        `<div class="summary-item"><strong>Boss</strong><br>血量清零 · ${bossPerfect}<br>共答 ${bossState.attempts} 题</div>` +
+        `<div class="summary-item"><strong>经验结算</strong><br>${buildCompactExpText(expSummary)}</div>` +
         `</div>` +
         `<details class="compact-details"><summary>查看完整运算路径</summary><div class="history-summary">${buildFullHistoryHtml()}</div></details>`;
       showResultModal("最终胜利", body, [
@@ -1304,8 +1470,34 @@
         before,
         op,
         value,
-        after
+        after,
+        source: "monster"
       });
+    }
+
+    function recordSkillOperation(before, delta, after) {
+      gameState.operationHistory.push({
+        level: gameState.levelIndex + 1,
+        before,
+        op: delta > 0 ? "+" : "-",
+        value: Math.abs(delta),
+        after,
+        source: "skill"
+      });
+    }
+
+    function claimLevelReward(levelIndex) {
+      if (gameState.levelRewardClaimed[levelIndex]) return 0;
+      gameState.levelRewardClaimed[levelIndex] = true;
+      gameState.runExp += 2;
+      return 2;
+    }
+
+    function claimBossReward() {
+      if (gameState.bossRewardClaimed) return 0;
+      gameState.bossRewardClaimed = true;
+      gameState.runExp += 4;
+      return 4;
     }
 
     function saveLevelResult() {
@@ -1336,15 +1528,218 @@
       const ratings = gameState.levelResults.map(result => result ? result.rating : "C");
       const sCount = ratings.filter(r => r === "S").length;
       const allAOrBetter = ratings.every(r => r === "S" || r === "A");
-      if (sCount >= 2 && gameState.lives >= 4 && bossState.attempts === 1) return "数学王者";
+      if (sCount >= 2 && gameState.lives >= 4 && bossState.mistakes === 0) return "数学王者";
       if ((allAOrBetter || sCount >= 1) && gameState.lives >= 2) return "地宫大师";
       return "数字勇者";
+    }
+
+    function createDefaultHeroProgress() {
+      return characters.reduce((data, ch) => {
+        data[`hero${ch.id}`] = { exp: 0 };
+        return data;
+      }, {});
+    }
+
+    function loadHeroProgress() {
+      const fallback = createDefaultHeroProgress();
+      try {
+        const raw = localStorage.getItem(progressStorageKey);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+        characters.forEach(ch => {
+          const keyName = `hero${ch.id}`;
+          const exp = Number(parsed?.[keyName]?.exp);
+          fallback[keyName] = { exp: Number.isFinite(exp) && exp > 0 ? Math.floor(exp) : 0 };
+        });
+      } catch (e) {
+        return fallback;
+      }
+      return fallback;
+    }
+
+    function saveHeroProgress() {
+      try {
+        localStorage.setItem(progressStorageKey, JSON.stringify(heroProgress));
+      } catch (e) {}
+    }
+
+    function getHeroExp(heroId) {
+      return Math.max(0, Math.floor(Number(heroProgress[`hero${heroId}`]?.exp) || 0));
+    }
+
+    function setHeroExp(heroId, exp) {
+      heroProgress[`hero${heroId}`] = { exp: Math.max(0, Math.floor(Number(exp) || 0)) };
+      saveHeroProgress();
+    }
+
+    function getHeroLevel(exp) {
+      let level = 1;
+      for (let i = 0; i < levelExpThresholds.length; i++) {
+        if (exp >= levelExpThresholds[i]) level = i + 1;
+      }
+      return Math.min(10, level);
+    }
+
+    function getNextLevelExp(level) {
+      return level >= 10 ? null : levelExpThresholds[level];
+    }
+
+    function getExpProgress(exp) {
+      const level = getHeroLevel(exp);
+      const next = getNextLevelExp(level);
+      return { level, exp, next, currentThreshold: levelExpThresholds[level - 1] };
+    }
+
+    function formatHeroExp(heroId) {
+      const progress = getExpProgress(getHeroExp(heroId));
+      if (progress.level >= 10) return "Lv.10 ｜ 已满级";
+      return `Lv.${progress.level} ｜ 经验 ${progress.exp} / ${progress.next}`;
+    }
+
+    function getSelectedHeroProgress() {
+      if (!gameState.selectedCharacter) return getExpProgress(0);
+      return getExpProgress(getHeroExp(gameState.selectedCharacter.id));
+    }
+
+    function resetRunExpState() {
+      gameState.runExp = 0;
+      gameState.levelRewardClaimed = [false, false, false];
+      gameState.bossRewardClaimed = false;
+      gameState.expSettled = false;
+      gameState.skillUsedThisLevel = false;
+    }
+
+    function settleRunExp() {
+      if (!gameState.selectedCharacter) {
+        return { gained: 0, beforeExp: 0, afterExp: 0, beforeLevel: 1, afterLevel: 1, settled: false };
+      }
+      const heroId = gameState.selectedCharacter.id;
+      const beforeExp = getHeroExp(heroId);
+      const beforeLevel = getHeroLevel(beforeExp);
+      if (!gameState.expSettled) {
+        setHeroExp(heroId, beforeExp + gameState.runExp);
+        heroProgress = loadHeroProgress();
+        gameState.expSettled = true;
+      }
+      const afterExp = getHeroExp(heroId);
+      return {
+        gained: gameState.runExp,
+        beforeExp,
+        afterExp,
+        beforeLevel,
+        afterLevel: getHeroLevel(afterExp),
+        settled: true,
+        heroName: gameState.selectedCharacter.name
+      };
+    }
+
+    function buildCompactExpText(summary) {
+      const progress = getExpProgress(summary.afterExp);
+      const levelText = summary.beforeLevel !== summary.afterLevel
+        ? `${summary.heroName} Lv.${summary.beforeLevel} → Lv.${summary.afterLevel}`
+        : `${summary.heroName} Lv.${summary.afterLevel}`;
+      const expText = progress.level >= 10 ? "已满级" : `当前经验：${summary.afterExp} / ${progress.next}`;
+      return `本局 +${summary.gained}<br>${levelText}<br>${expText}`;
+    }
+
+    function buildExpSettlementHtml(summary) {
+      if (!summary || !summary.heroName) return "";
+      if (summary.gained === 0) {
+        return `本局获得经验：+0<br>继续挑战可以获得更多经验！<br>${summary.heroName} 当前等级：Lv.${summary.afterLevel}`;
+      }
+      return `${buildCompactExpText(summary)}<br>经验已保存`;
+    }
+
+    function getSkillRangeByLevel(level) {
+      if (level < 2) return [];
+      const max = level >= 9 ? 5 : (level >= 7 ? 4 : (level >= 5 ? 3 : (level >= 3 ? 2 : 1)));
+      const values = [];
+      for (let i = max; i >= 1; i--) values.push(-i);
+      for (let i = 1; i <= max; i++) values.push(i);
+      return values;
+    }
+
+    function getCurrentHeroSkillInfo() {
+      const ch = gameState.selectedCharacter;
+      if (!ch) return { level: 1, skillName: "技能", range: [], unlocked: false };
+      const level = getSelectedHeroProgress().level;
+      return {
+        level,
+        skillName: ch.skillName,
+        range: getSkillRangeByLevel(level),
+        unlocked: level >= 2
+      };
+    }
+
+    function handleSkillButtonClick() {
+      if (gameState.screen !== "game") return;
+      if (document.getElementById("modalBackdrop").classList.contains("show") || document.getElementById("battleOverlay").classList.contains("show")) return;
+      const info = getCurrentHeroSkillInfo();
+      if (!info.unlocked) {
+        showToast("英雄达到 Lv.2 后解锁技能。");
+        return;
+      }
+      if (gameState.skillUsedThisLevel) {
+        showToast("本关技能已经使用过了。");
+        return;
+      }
+      showSkillModal(info);
+    }
+
+    function showSkillModal(info) {
+      const modal = document.getElementById("modal");
+      modal.innerHTML = `
+        <h2>${info.skillName}</h2>
+        <div class="feedback">
+          当前数字：<strong>${gameState.currentNumber}</strong><br>
+          选择一个数值，对当前数字进行微调。<br>
+          <div class="skill-options">
+            ${info.range.map(delta => {
+              const next = gameState.currentNumber + delta;
+              const label = delta > 0 ? `+${delta}` : `${delta}`;
+              return `<button class="skill-option" data-delta="${delta}" ${next < 1 ? "disabled" : ""}>${label}</button>`;
+            }).join("")}
+          </div>
+          每关只能使用一次技能。
+        </div>
+        <div class="button-row" style="margin-top:14px;">
+          <button id="cancelSkillBtn" class="secondary-btn">取消</button>
+        </div>
+      `;
+      modal.querySelectorAll(".skill-option").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const delta = Number(btn.dataset.delta);
+          if (gameState.currentNumber + delta < 1) {
+            showToast("当前数字不能低于 1。");
+            return;
+          }
+          applyHeroSkill(delta, info.skillName);
+        });
+      });
+      document.getElementById("cancelSkillBtn").addEventListener("click", closeModal);
+      document.getElementById("modalBackdrop").classList.add("show");
+    }
+
+    function applyHeroSkill(delta, skillName) {
+      const before = gameState.currentNumber;
+      const after = before + delta;
+      if (after < 1) {
+        showToast("当前数字不能低于 1。");
+        return;
+      }
+      gameState.currentNumber = after;
+      gameState.skillUsedThisLevel = true;
+      recordSkillOperation(before, delta, after);
+      flashElement("numberStat", "flash-good");
+      closeModal();
+      showToast(`${skillName}发动：${before} ${delta > 0 ? "+" : "-"} ${Math.abs(delta)} = ${after}`);
+      render();
     }
 
     function buildFullHistoryHtml() {
       if (!gameState.operationHistory.length) return "还没有运算记录。";
       return gameState.operationHistory
-        .map(item => `第 ${item.level} 关：${item.before} ${item.op} ${item.value} = ${item.after}`)
+        .map(item => `第 ${item.level} 关：${formatHistoryItem(item)}`)
         .join("<br>");
     }
 
@@ -1357,11 +1752,15 @@
       gameState.operationHistory = [];
       gameState.levelResults = [];
       gameState.usedQuestionIds = [];
+      resetRunExpState();
       gameState.historyExpanded = false;
       bossState.active = false;
       bossState.question = null;
       bossState.answered = false;
       bossState.attempts = 0;
+      bossState.mistakes = 0;
+      bossState.hp = bossState.maxHp;
+      bossState.defeated = false;
       startLevel(0);
     }
 
@@ -1377,13 +1776,41 @@
         7. 答对后执行怪物运算，改变当前数字。<br>
         8. 答错后生命 -1，怪物保留，但下次题目会刷新。<br>
         9. 当前数字必须等于出口目标数字，才能通过出口。<br>
-        10. 通过第 3 关后，还要战胜暗算魔王，才算最终胜利。<br>
-        11. Boss 答错不会扣生命，但会返回第 3 关重新挑战。<br>
-        12. 生命归零则整局失败。
+        10. 地图里可能出现爱心和宝箱，爱心回血，宝箱给线索。<br>
+        11. 通过第 3 关后，还要把暗算魔王 3 点血量清零，才算最终胜利。<br>
+        12. Boss 答错会扣 1 点生命，但不会返回第 3 关。<br>
+        13. 生命归零则整局失败。
       `;
       showResultModal("规则说明", body, [
         { text: "知道了", action: () => closeModal() }
       ]);
+    }
+
+    function showChestModal() {
+      showResultModal("发现宝箱！", `<div style="font-size:42px;text-align:center;">🎁</div><br>${getChestHint()}`, [
+        { text: "知道了", action: () => closeModal() }
+      ]);
+    }
+
+    function getChestHint() {
+      const grade = gameState.selectedGrade || 4;
+      const hintsByGrade = grade === 1
+        ? [
+          "线索：先找加法怪物，把数字慢慢变大。",
+          "线索：减法怪物可以帮你把数字调小。",
+          "线索：出口数字不一定要一步到达，可以分几次计算。",
+          "线索：生命不多时，可以先找爱心。",
+          "线索：看看目标数字，再选择合适的加减怪物。"
+        ]
+        : [
+          "线索：这一关可能需要先把数字变大，再用减法或除法修正。",
+          "线索：不要只盯着最大的乘法怪，它不一定是最优选择。",
+          "线索：减法怪物有时不是坏事，它可能是关键一步。",
+          "线索：如果遇到除法怪物，先判断当前数字能不能整除。",
+          "线索：可以从出口目标倒着想，看看它可能由哪些数字乘出来。",
+          "线索：地图远处的怪物也可能是关键路径的一部分。"
+        ];
+      return randomItem(hintsByGrade);
     }
 
     function showTutorialIfNeeded() {
@@ -1426,8 +1853,9 @@
       document.getElementById("gameScreen").classList.toggle("active", gameState.screen === "game");
       document.getElementById("bossScreen").classList.toggle("active", gameState.screen === "boss");
       if (gameState.selectedCharacter) {
+        const heroLevel = getSelectedHeroProgress().level;
         document.getElementById("topAvatar").innerHTML = avatarHtml(gameState.selectedCharacter, "英雄");
-        document.getElementById("topName").textContent = gameState.selectedCharacter.name;
+        document.getElementById("topName").textContent = `${gameState.selectedCharacter.name} Lv.${heroLevel}`;
         document.getElementById("topTitle").textContent = gameState.selectedCharacter.title;
         document.getElementById("bossPlayerAvatar").innerHTML = avatarHtml(gameState.selectedCharacter, "英雄");
         document.getElementById("bossPlayerName").textContent = gameState.selectedCharacter.name;
@@ -1439,10 +1867,12 @@
       document.getElementById("lifeStat").textContent = hearts(gameState.lives);
       document.getElementById("stepStat").textContent = gameState.steps;
       document.getElementById("bossLife").textContent = hearts(gameState.lives);
+      document.getElementById("bossHp").textContent = bossHearts(bossState.hp);
       document.getElementById("rulesBox").classList.toggle("show", gameState.rulesVisible);
       document.getElementById("debugPanel").classList.toggle("show", gameState.debugVisible);
       renderMaze();
       renderOperationHistory();
+      renderSkillButton();
       renderDebug();
     }
 
@@ -1471,6 +1901,11 @@
             cell.classList.add("monster");
             cell.innerHTML = `${monsterAvatarHtml(true, monster.id)}<span class="op-badge ${operationBadgeClass(monster.op)}">${monster.label}</span>`;
           }
+          const item = itemAt(x, y);
+          if (item) {
+            cell.classList.add(item.type === "heart" ? "item-heart" : "item-chest");
+            cell.innerHTML = `<span class="item-icon">${item.type === "heart" ? "❤️" : "🎁"}</span>`;
+          }
           if (x === gameState.player.x && y === gameState.player.y) {
             cell.classList.add("player");
             cell.innerHTML = `<div class="mini-avatar">${avatarHtml(gameState.selectedCharacter, "我")}</div><span class="num-badge">${gameState.currentNumber}</span>`;
@@ -1496,8 +1931,30 @@
         return;
       }
       list.innerHTML = recent
-        .map(item => `<div class="history-item">${item.before} ${item.op} ${item.value} = ${item.after}</div>`)
+        .map(item => `<div class="history-item">${formatHistoryItem(item)}</div>`)
         .join("");
+    }
+
+    function formatHistoryItem(item) {
+      const text = `${item.before} ${item.op} ${item.value} = ${item.after}`;
+      return item.source === "skill" ? `技能：${text}` : text;
+    }
+
+    function renderSkillButton() {
+      const btn = document.getElementById("skillBtn");
+      if (!btn) return;
+      const info = getCurrentHeroSkillInfo();
+      btn.classList.remove("locked", "used");
+      let state = "本关可用：1/1";
+      if (!info.unlocked) {
+        btn.classList.add("locked");
+        state = "Lv.2 解锁";
+      } else if (gameState.skillUsedThisLevel) {
+        btn.classList.add("used");
+        state = "本关已用";
+      }
+      btn.innerHTML = `<span class="skill-name">${info.skillName}</span><span class="skill-state">${state}</span>`;
+      btn.setAttribute("aria-disabled", (!info.unlocked || gameState.skillUsedThisLevel) ? "true" : "false");
     }
 
     function renderDebug() {
@@ -1505,7 +1962,12 @@
       if (!gameState.debugVisible) return;
       const pathText = gameState.hiddenPath.map((s, i) => `${i + 1}. ${s.before} ${s.op} ${s.value} = ${s.after}`).join("\n");
       const monstersText = gameState.monsters.map((m, i) => `${i + 1}. (${m.x},${m.y}) ${m.label}${m.keyMonster ? " 关键" : " 干扰"}`).join("\n");
+      const itemsText = gameState.items.map((item, i) => `${i + 1}. (${item.x},${item.y}) ${item.type === "heart" ? "爱心" : "宝箱"}`).join("\n") || "无";
       const resultsText = gameState.levelResults.map((r, i) => r ? `第 ${i + 1} 关：${r.steps} 步，${r.rating} 级` : `第 ${i + 1} 关：未完成`).join("\n");
+      const heroProgressText = gameState.selectedCharacter
+        ? `总经验 ${getHeroExp(gameState.selectedCharacter.id)}，Lv.${getSelectedHeroProgress().level}`
+        : "未选择";
+      const skillInfo = getCurrentHeroSkillInfo();
       panel.textContent =
         `当前关卡：${gameState.levelIndex + 1}\n` +
         `当前数字：${gameState.currentNumber}\n` +
@@ -1515,14 +1977,27 @@
         `关卡配置：${JSON.stringify(getActiveLevels()[gameState.levelIndex] || {})}\n` +
         `隐藏通关路径：\n${pathText}\n\n` +
         `怪物列表：\n${monstersText}\n\n` +
+        `道具列表：\n${itemsText}\n\n` +
         `地图尺寸：${gameState.map.length}×${gameState.map.length}\n` +
         `步数：${gameState.steps}\n` +
         `所选角色：${gameState.selectedCharacter ? gameState.selectedCharacter.name : "未选择"}\n` +
+        `当前英雄经验等级：${heroProgressText}\n` +
+        `本局临时经验：${gameState.runExp}\n` +
+        `当前英雄技能：${skillInfo.skillName}\n` +
+        `当前技能范围：${skillInfo.range.map(v => v > 0 ? `+${v}` : String(v)).join(", ") || "未解锁"}\n` +
+        `本关技能是否已使用：${gameState.skillUsedThisLevel ? "是" : "否"}\n` +
+        `skillUsedThisLevel：${gameState.skillUsedThisLevel}\n` +
+        `关卡经验领取：${JSON.stringify(gameState.levelRewardClaimed)}\n` +
+        `Boss 奖励领取：${gameState.bossRewardClaimed}\n` +
+        `经验已结算：${gameState.expSettled}\n` +
         `是否 Boss 状态：${bossState.active ? "是" : "否"}\n` +
+        `Boss 当前 HP：${bossState.hp}\n` +
+        `Boss 最大 HP：${bossState.maxHp}\n` +
         `Boss 尝试次数：${bossState.attempts}\n` +
+        `Boss 答错次数：${bossState.mistakes}\n` +
         `本局已用题目数：${gameState.usedQuestionIds.length}\n` +
         `关卡评级：\n${resultsText}\n\n` +
-        `完整运算历史：\n${gameState.operationHistory.map(item => `第 ${item.level} 关：${item.before} ${item.op} ${item.value} = ${item.after}`).join("\n") || "无"}`;
+        `完整运算历史：\n${gameState.operationHistory.map(item => `第 ${item.level} 关：${formatHistoryItem(item)}`).join("\n") || "无"}`;
     }
 
     function showMonsterConfirmModal(monster, prev, next) {
@@ -1564,7 +2039,7 @@
       const modal = document.getElementById("modal");
       modal.innerHTML = `
         <h2>${title}</h2>
-        ${subtitle ? `<p style="margin:0 0 8px;color:#6b4c16;font-weight:800;">${subtitle}</p>` : ""}
+        ${subtitle ? `<div class="question-subtitle">${subtitle}</div>` : ""}
         <p>${question.q}</p>
         <div class="options">
           ${question.options.map((op, i) => `<button class="option-btn" data-option="${i}">${String.fromCharCode(65 + i)}. ${formatOption(op)}</button>`).join("")}
@@ -1592,7 +2067,7 @@
       overlay.classList.toggle("boss-battle", isBoss);
       overlay.setAttribute("aria-hidden", "false");
       const heroClass = resultWin ? "avatar-flash" : "avatar-hit";
-      const enemyClass = resultWin ? "avatar-defeat" : "avatar-flash";
+      const enemyClass = config.enemyEffect === "hit" ? "avatar-flash" : (resultWin ? "avatar-defeat" : "avatar-flash");
       const enemyPortrait = isBoss
         ? `<div class="battle-portrait boss-side ${enemyClass}"><img src="boss.png" alt="暗算魔王" onerror="this.remove(); this.parentNode.textContent='Boss';"></div>`
         : `<div class="battle-portrait monster-side ${enemyClass}"><img src="monster.png" alt="怪物" onerror="this.remove(); this.parentNode.textContent='怪物';"></div>`;
@@ -1673,11 +2148,13 @@
       gameState.steps = 0;
       gameState.map = [];
       gameState.monsters = [];
+      gameState.items = [];
       gameState.hiddenPath = [];
       gameState.operationHistory = [];
       gameState.levelResults = [];
       gameState.usedQuestionIds = [];
       gameState.pendingEncounter = null;
+      resetRunExpState();
       gameState.debugVisible = false;
       gameState.rulesVisible = false;
       gameState.historyExpanded = false;
@@ -1685,7 +2162,11 @@
       bossState.question = null;
       bossState.answered = false;
       bossState.attempts = 0;
+      bossState.mistakes = 0;
+      bossState.hp = bossState.maxHp;
+      bossState.defeated = false;
       document.querySelectorAll(".character-card").forEach(card => card.classList.remove("selected"));
+      renderCharacterCards();
       render();
     }
 
@@ -1845,6 +2326,10 @@
       return gameState.monsters.find(m => m.x === x && m.y === y);
     }
 
+    function itemAt(x, y) {
+      return gameState.items.find(item => item.x === x && item.y === y);
+    }
+
     function insideMap(x, y) {
       return y >= 0 && y < gameState.map.length && x >= 0 && x < gameState.map.length;
     }
@@ -1875,6 +2360,10 @@
 
     function hearts(n) {
       return "♥".repeat(Math.max(0, n)) + "♡".repeat(Math.max(0, 5 - n));
+    }
+
+    function bossHearts(n) {
+      return "💜".repeat(Math.max(0, n)) + "♡".repeat(Math.max(0, bossState.maxHp - n));
     }
 
     function formatOption(value) {
