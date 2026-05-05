@@ -140,6 +140,14 @@
     .compact-details { margin-top: 8px; border-radius: 8px; background: #fff8e8; border: 1px solid #ead8ad; }
     .compact-details summary { padding: 8px 10px; font-weight: 900; cursor: pointer; }
     .compact-details .history-summary { border: 0; border-top: 1px solid #ead8ad; border-radius: 0 0 8px 8px; margin: 0; }
+    .ceremony { text-align: center; display: grid; gap: 10px; place-items: center; }
+    .ceremony.dark { margin: -8px; padding: 16px; border-radius: 8px; background: radial-gradient(circle at 50% 12%, rgba(139,78,169,.45), rgba(25,18,38,.96) 62%); color: #f6f0df; }
+    .ceremony.gold { margin: -8px; padding: 16px; border-radius: 8px; background: radial-gradient(circle at 50% 12%, rgba(255,224,138,.82), rgba(47,61,88,.94) 66%); color: #fff7df; }
+    .ceremony.hero { margin: -8px; padding: 16px; border-radius: 8px; background: radial-gradient(circle at 50% 12%, rgba(96,151,203,.45), rgba(18,33,50,.96) 66%); color: #f6f0df; }
+    .ceremony .avatar { width: 96px; height: 96px; border-color: #f6c85f; }
+    .ceremony-title { font-size: clamp(22px, 6vw, 30px); font-weight: 1000; line-height: 1.1; }
+    .ceremony-sub { color: #f6c85f; font-weight: 900; }
+    .ceremony-text { max-width: 480px; line-height: 1.6; font-weight: 800; }
     .battle-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 14px; background: radial-gradient(circle at center, rgba(67,76,95,.92), rgba(8,12,18,.96)); z-index: 70; color: #f6f0df; overflow: hidden; }
     .battle-overlay.show { display: flex; animation: battleFadeIn .22s ease-out; }
     .battle-overlay.boss-battle { background: radial-gradient(circle at center, rgba(89,45,113,.94), rgba(12,8,20,.97)); }
@@ -668,6 +676,7 @@
       levelRewardClaimed: [false, false, false],
       bossRewardClaimed: false,
       expSettled: false,
+      lastExpSettlement: null,
       skillUsedThisLevel: false,
       debugVisible: false,
       rulesVisible: false,
@@ -1400,7 +1409,7 @@
           enemyEffect: defeated ? "defeat" : "hit",
           actions: [
             defeated
-              ? { text: "最终胜利", action: () => { closeBattleOverlay(); showFinalVictory(q); } }
+              ? { text: "继续", action: () => { closeBattleOverlay(); startBossVictorySequence(); } }
               : { text: "继续战斗", action: () => { closeBattleOverlay(); bossState.question = null; bossState.answered = false; render(); startBossChallenge(); } }
           ]
         });
@@ -1408,12 +1417,12 @@
         bossState.mistakes++;
         gameState.lives = Math.max(0, gameState.lives - 1);
         const failed = gameState.lives <= 0;
-        const expHtml = failed ? `<br>${buildExpSettlementHtml(settleRunExp())}` : "";
+        const expSummary = failed ? settleRunExp() : null;
         const detail =
           `${failed ? "暗算魔王挡住了出口，再修炼一次吧！" : "挑战失败！生命 -1。"}<br>` +
           `正确答案：${optionLabel(q.answer)}. ${formatOption(q.options[q.answer])}<br>` +
           `<div class="battle-scroll">解析：${q.exp.replace(/\n/g, "<br>")}</div>` +
-          `玩家剩余生命：${hearts(gameState.lives)}<br>Boss 剩余血量：${bossHearts(bossState.hp)}${expHtml}`;
+          `玩家剩余生命：${hearts(gameState.lives)}<br>Boss 剩余血量：${bossHearts(bossState.hp)}`;
         showBattleScene({
           type: "boss",
           result: "lose",
@@ -1424,7 +1433,7 @@
           enemySub: "数字地宫的最终守门人",
           actions: [
             failed
-              ? { text: "回到开始界面", action: () => { closeBattleOverlay(); resetToStart(); } }
+              ? { text: "继续", action: () => { closeBattleOverlay(); showHeroEncourageModal(expSummary); } }
               : { text: "继续战斗", action: () => { closeBattleOverlay(); bossState.question = null; bossState.answered = false; render(); startBossChallenge(); } }
           ]
         });
@@ -1439,8 +1448,8 @@
     }
 
     function showFinalVictory(q) {
-      claimBossReward();
-      const expSummary = settleRunExp();
+      if (bossState.defeated) claimBossReward();
+      const expSummary = gameState.lastExpSettlement || settleRunExp();
       const finalRating = getFinalRating();
       const totalSteps = getTotalSteps();
       const bossPerfect = bossState.mistakes === 0 ? "完美通过" : `答错 ${bossState.mistakes} 次`;
@@ -1458,6 +1467,80 @@
       showResultModal("最终胜利", body, [
         { text: "回到开始界面", action: () => resetToStart() },
         { text: "重新挑战", action: () => restartRunWithCurrentCharacter() }
+      ]);
+    }
+
+    function startBossVictorySequence() {
+      claimBossReward();
+      const expSummary = settleRunExp();
+      showBossDefeatMonologue(expSummary);
+    }
+
+    function showBossDefeatMonologue(expSummary) {
+      const lines = [
+        "没想到，你竟然真的破解了数字地宫的秘密……看来，我低估了你的智慧。",
+        "很好，你已经证明了自己。这座地宫，从现在起，不再阻挡你前进。",
+        "原来，真正的力量不是蛮力，而是清晰的思考与计算。去吧，胜利属于你。",
+        "我守护了这里很久，终于等到了真正能通过试炼的人。数字地宫的大门，为你而开。"
+      ];
+      const body = `
+        <div class="ceremony dark">
+          <div class="avatar"><img src="boss.png" alt="暗算魔王" onerror="this.remove(); this.parentNode.textContent='Boss';"></div>
+          <div class="ceremony-title">暗算魔王</div>
+          <div class="ceremony-sub">数字地宫的最终守门人</div>
+          <div class="ceremony-text">${randomItem(lines)}</div>
+        </div>
+      `;
+      showResultModal("Boss 败退", body, [
+        { text: "继续", action: () => {
+          closeModal();
+          if (expSummary?.didLevelUp) showLevelUpModal(expSummary);
+          else showFinalVictory();
+        } }
+      ]);
+    }
+
+    function showLevelUpModal(expSummary) {
+      const rangeText = formatSkillRange(getSkillRangeByLevel(expSummary.afterLevel));
+      const skillTip = expSummary.afterLevel === 2
+        ? `已解锁技能：${gameState.selectedCharacter.skillName}<br>每关可使用 1 次数字微调。`
+        : `技能增强！<br>当前可微调范围：${rangeText}`;
+      const body = `
+        <div class="ceremony gold">
+          <div class="avatar">${avatarHtml(gameState.selectedCharacter, "英雄")}</div>
+          <div class="ceremony-title">升级成功！</div>
+          <div class="ceremony-sub">${gameState.selectedCharacter.name}</div>
+          <div class="ceremony-text">Lv.${expSummary.beforeLevel} → Lv.${expSummary.afterLevel}<br>${skillTip}</div>
+        </div>
+      `;
+      showResultModal("英雄升级", body, [
+        { text: "继续", action: () => { closeModal(); showFinalVictory(); } }
+      ]);
+    }
+
+    function showHeroEncourageModal(expSummary) {
+      const lines = {
+        1: "别灰心！这次只是差一点。我们已经知道暗算魔王的套路了，下次一定能赢！",
+        2: "失败不是结束，只是还没有找到最优解。重新计算一次，我们会更强。",
+        3: "真正的高手，都是从一次次失败里学会冷静判断的。调整思路，再来一次。"
+      };
+      const body = `
+        <div class="ceremony hero">
+          <div class="avatar">${avatarHtml(gameState.selectedCharacter, "英雄")}</div>
+          <div class="ceremony-title">${gameState.selectedCharacter.name}</div>
+          <div class="ceremony-text">${lines[gameState.selectedCharacter.id] || lines[1]}</div>
+        </div>
+      `;
+      showResultModal("继续修炼", body, [
+        { text: "查看本局结果", action: () => { closeModal(); showFailureResultModal(expSummary, "暗算魔王暂时挡住了出口，但你的经验已经保存。"); } }
+      ]);
+    }
+
+    function showFailureResultModal(expSummary, reason = "整局挑战失败。") {
+      const summary = expSummary || gameState.lastExpSettlement || settleRunExp();
+      showResultModal("挑战失败", `${reason}<br><br>${buildExpSettlementHtml(summary)}`, [
+        { text: "回到开始界面", action: () => resetToStart() },
+        { text: "从第 1 关重来", action: () => restartRunWithCurrentCharacter() }
       ]);
     }
 
@@ -1603,12 +1686,15 @@
       gameState.levelRewardClaimed = [false, false, false];
       gameState.bossRewardClaimed = false;
       gameState.expSettled = false;
+      gameState.lastExpSettlement = null;
       gameState.skillUsedThisLevel = false;
     }
 
     function settleRunExp() {
+      if (gameState.lastExpSettlement) return gameState.lastExpSettlement;
       if (!gameState.selectedCharacter) {
-        return { gained: 0, beforeExp: 0, afterExp: 0, beforeLevel: 1, afterLevel: 1, settled: false };
+        gameState.lastExpSettlement = { gained: 0, beforeExp: 0, afterExp: 0, beforeLevel: 1, afterLevel: 1, didLevelUp: false, settled: false };
+        return gameState.lastExpSettlement;
       }
       const heroId = gameState.selectedCharacter.id;
       const beforeExp = getHeroExp(heroId);
@@ -1619,15 +1705,17 @@
         gameState.expSettled = true;
       }
       const afterExp = getHeroExp(heroId);
-      return {
+      gameState.lastExpSettlement = {
         gained: gameState.runExp,
         beforeExp,
         afterExp,
         beforeLevel,
         afterLevel: getHeroLevel(afterExp),
+        didLevelUp: getHeroLevel(afterExp) > beforeLevel,
         settled: true,
         heroName: gameState.selectedCharacter.name
       };
+      return gameState.lastExpSettlement;
     }
 
     function buildCompactExpText(summary) {
@@ -1654,6 +1742,11 @@
       for (let i = max; i >= 1; i--) values.push(-i);
       for (let i = 1; i <= max; i++) values.push(i);
       return values;
+    }
+
+    function formatSkillRange(range) {
+      const positives = [...new Set(range.map(v => Math.abs(v)).filter(Boolean))].sort((a, b) => a - b);
+      return positives.length ? positives.map(v => `±${v}`).join("、") : "未解锁";
     }
 
     function getCurrentHeroSkillInfo() {
@@ -1995,6 +2088,10 @@
         `关卡经验领取：${JSON.stringify(gameState.levelRewardClaimed)}\n` +
         `Boss 奖励领取：${gameState.bossRewardClaimed}\n` +
         `经验已结算：${gameState.expSettled}\n` +
+        `lastExpSettlement：${JSON.stringify(gameState.lastExpSettlement)}\n` +
+        `didLevelUp：${gameState.lastExpSettlement?.didLevelUp ? "是" : "否"}\n` +
+        `当前 screen：${gameState.screen}\n` +
+        `弹窗状态：${document.getElementById("modalBackdrop").classList.contains("show") ? "打开" : "关闭"}\n` +
         `是否 Boss 状态：${bossState.active ? "是" : "否"}\n` +
         `Boss 当前 HP：${bossState.hp}\n` +
         `Boss 最大 HP：${bossState.maxHp}\n` +
