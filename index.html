@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>数字地宫：迷宫突围</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: "Microsoft YaHei", Arial, sans-serif; background: #18202b; color: #f6f0df; }
+    body { overflow-x: hidden; touch-action: manipulation; }
+    button { font: inherit; cursor: pointer; border: 0; }
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    .screen { display: none; width: 100%; min-height: 100vh; padding: 18px; }
+    .screen.active { display: flex; }
+    .start-screen { align-items: center; justify-content: center; background: radial-gradient(circle at top, #344454 0, #18202b 55%); }
+    .start-panel { width: min(980px, 100%); }
+    .title { text-align: center; margin: 0 0 8px; font-size: clamp(28px, 6vw, 48px); letter-spacing: 0; }
+    .subtitle { text-align: center; margin: 0 auto 22px; max-width: 780px; line-height: 1.7; color: #d9d0bc; }
+    .character-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0; }
+    .character-card { min-height: 270px; padding: 14px; border: 2px solid #546273; border-radius: 8px; background: rgba(255,255,255,0.07); color: #f6f0df; text-align: left; transition: transform .12s, border-color .12s, background .12s; }
+    .character-card.selected { border-color: #f6c85f; background: rgba(246,200,95,0.16); transform: translateY(-2px); }
+    .avatar { width: 92px; height: 92px; border-radius: 8px; background: #2c3845; border: 2px solid #8090a0; display: grid; place-items: center; overflow: hidden; color: #f6c85f; font-weight: 700; text-align: center; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .character-card .avatar { margin: 0 auto 12px; width: 118px; height: 118px; }
+    .character-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; text-align: center; }
+    .character-title { color: #f6c85f; font-weight: 700; margin-bottom: 10px; text-align: center; }
+    .character-desc { color: #d9d0bc; line-height: 1.55; }
+    .primary-btn, .secondary-btn, .small-btn { border-radius: 8px; padding: 12px 18px; color: #1d2229; background: #f6c85f; font-weight: 800; }
+    .primary-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .secondary-btn { background: #d8e2ef; }
+    .small-btn { padding: 9px 12px; font-size: 14px; }
+    .start-actions { display: flex; justify-content: center; margin-top: 16px; }
+    .game-screen { flex-direction: column; gap: 12px; min-height: 100vh; padding: 12px; background: #202a35; }
+    .topbar { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding: 10px; border-radius: 8px; background: #111820; border: 1px solid #3b4654; }
+    .player-summary { display: flex; gap: 10px; align-items: center; min-width: 0; }
+    .topbar .avatar { width: 54px; height: 54px; font-size: 12px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(5, minmax(86px, 1fr)); gap: 8px; }
+    .stat { padding: 8px 10px; border-radius: 8px; background: #293643; min-height: 52px; }
+    .stat-label { font-size: 12px; color: #b9c3cf; }
+    .stat-value { margin-top: 3px; font-size: 18px; font-weight: 800; }
+    .hearts { color: #ff6f87; letter-spacing: 1px; }
+    .history-panel { padding: 10px 12px; border-radius: 8px; background: #111820; border: 1px solid #3b4654; }
+    .history-title { margin: 0 0 6px; font-size: 15px; font-weight: 900; color: #f6c85f; }
+    .history-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .history-item { min-height: 34px; padding: 7px 9px; border-radius: 7px; background: #293643; color: #f6f0df; font-weight: 800; text-align: center; }
+    .history-empty { color: #b9c3cf; font-size: 14px; }
+    .main-layout { display: grid; grid-template-columns: 1fr minmax(230px, 280px); gap: 12px; align-items: start; }
+    .map-wrap { width: 100%; display: flex; justify-content: center; align-items: start; overflow: auto; padding: 8px; border-radius: 8px; background: linear-gradient(145deg, #111820, #2b3440); border: 3px solid #59606c; box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), 0 12px 28px rgba(0,0,0,.25); }
+    .maze { display: grid; gap: 2px; width: min(92vw, 680px); aspect-ratio: 1 / 1; padding: 3px; border-radius: 7px; background: #1a222b; box-shadow: inset 0 0 18px rgba(0,0,0,.34); align-items: stretch; justify-items: stretch; }
+    .cell { width: 100%; min-width: 0; min-height: 0; aspect-ratio: 1 / 1; border-radius: 5px; background: linear-gradient(145deg, #ead59f 0%, #d8bf7f 48%, #c7a965 100%); color: #26313d; display: flex; align-items: center; justify-content: center; position: relative; font-weight: 800; line-height: 1; user-select: none; border: 1px solid rgba(120,82,28,.32); box-shadow: inset 1px 1px 0 rgba(255,255,255,.48), inset -2px -2px 0 rgba(113,75,31,.18); overflow: hidden; }
+    .cell::after { content: ""; position: absolute; inset: 2px; border-radius: inherit; background: linear-gradient(135deg, rgba(255,255,255,.16), transparent 42%, rgba(104,73,30,.10)); pointer-events: none; }
+    .cell.wall { background: linear-gradient(145deg, #637184 0%, #3f4d5e 50%, #2f3948 100%); border-color: rgba(16,24,34,.8); box-shadow: inset 2px 2px 0 rgba(255,255,255,.14), inset -3px -3px 0 rgba(0,0,0,.28), 0 1px 1px rgba(0,0,0,.22); }
+    .cell.wall::after { background: linear-gradient(135deg, rgba(255,255,255,.12), transparent 35%, rgba(0,0,0,.16)); }
+    .cell.outer-wall { background: linear-gradient(145deg, #4b596b 0%, #2b3544 58%, #1e2733 100%); box-shadow: inset 2px 2px 0 rgba(255,255,255,.1), inset -3px -3px 0 rgba(0,0,0,.38); }
+    .cell.exit { background: linear-gradient(145deg, #bfe8ae 0%, #76c787 58%, #4a9e66 100%); color: #102819; border-color: rgba(42,107,55,.55); }
+    .cell.exit-ready { animation: exitGlow 1.15s ease-in-out infinite alternate; box-shadow: inset 1px 1px 0 rgba(255,255,255,.5), 0 0 0 2px #f6c85f, 0 0 14px rgba(82,218,117,.85); }
+    .cell.monster { background: linear-gradient(145deg, #f1d8a1 0%, #d7b46e 100%); color: #fff9ee; }
+    .cell.player { outline: 2px solid #ffe08a; z-index: 2; animation: playerGlow .9s ease-out; box-shadow: inset 1px 1px 0 rgba(255,255,255,.5), 0 0 0 2px rgba(246,200,95,.9), 0 0 16px rgba(246,200,95,.72); }
+    .cell .mini-avatar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; max-width: 78%; max-height: 78%; border-radius: 6px; overflow: hidden; background: #25303b; display: flex; align-items: center; justify-content: center; color: #f6c85f; font-size: 10px; border: 1px solid #f6c85f; box-shadow: 0 2px 6px rgba(0,0,0,.28); z-index: 1; pointer-events: none; }
+    .cell .mini-avatar img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; display: block; }
+    .cell .num-badge { position: absolute; right: 2px; bottom: 2px; min-width: 18px; padding: 1px 3px; border-radius: 5px; background: #111820; color: #fff; font-size: clamp(9px, 1.8vw, 12px); border: 1px solid rgba(255,255,255,.55); z-index: 3; }
+    .door-avatar { width: 76%; height: 72%; border-radius: 7px; overflow: hidden; display: grid; place-items: center; color: #10351d; font-size: 12px; font-weight: 900; z-index: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,.22)); }
+    .door-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cell .door-avatar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 78%; height: 78%; max-width: 80%; max-height: 80%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .cell .door-avatar img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
+    .door-avatar.door-fallback::before { content: "出口"; }
+    .exit-badge { position: absolute; right: 2px; bottom: 2px; min-width: 24px; padding: 2px 4px; border-radius: 999px; background: #10351d; color: #fff; font-size: clamp(9px, 1.8vw, 12px); line-height: 1.1; font-weight: 900; text-align: center; border: 1px solid rgba(255,255,255,.8); box-shadow: 0 2px 5px rgba(0,0,0,.25); z-index: 3; }
+    .monster-avatar { width: 72%; height: 72%; border-radius: 7px; overflow: hidden; background: linear-gradient(145deg, #7a432d, #4c2f27); border: 1px solid rgba(255,255,255,.75); display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 0 2px 6px rgba(0,0,0,.25); z-index: 1; }
+    .monster-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cell .monster-avatar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 72%; height: 72%; max-width: 78%; max-height: 78%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .cell .monster-avatar img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
+    .op-badge { position: absolute; right: 2px; top: 2px; min-width: 24px; padding: 2px 4px; border-radius: 999px; color: #fff; font-size: clamp(10px, 2vw, 14px); line-height: 1.1; font-weight: 900; border: 1px solid rgba(255,255,255,.9); box-shadow: 0 2px 5px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.22); text-align: center; z-index: 3; }
+    .op-add { background: linear-gradient(145deg, #32c875, #128449); }
+    .op-sub { background: linear-gradient(145deg, #ff6b63, #c52c35); }
+    .op-mul { background: linear-gradient(145deg, #4da2ff, #1f5fca); }
+    .op-div { background: linear-gradient(145deg, #b46bff, #6f34bd); }
+    .cell .exit-target { font-size: clamp(10px, 2.5vw, 16px); }
+    .side-panel { display: flex; flex-direction: column; gap: 10px; }
+    .controls, .debug-panel, .rules-box { padding: 10px; border-radius: 8px; background: #111820; border: 1px solid #3b4654; }
+    .controls h3, .debug-panel h3, .rules-box h3 { margin: 0 0 8px; font-size: 16px; }
+    .dpad { width: 190px; margin: 6px auto 10px; display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 54px); gap: 6px; justify-content: center; position: relative; z-index: 20; touch-action: none; pointer-events: auto; }
+    .dpad button { border-radius: 8px; background: #d8e2ef; color: #1e2730; font-size: 24px; font-weight: 900; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; pointer-events: auto; }
+    .dpad .up { grid-column: 2; grid-row: 1; }
+    .dpad .left { grid-column: 1; grid-row: 2; }
+    .dpad .right { grid-column: 3; grid-row: 2; }
+    .dpad .down { grid-column: 2; grid-row: 3; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .debug-panel { display: none; font-size: 13px; color: #d9d0bc; max-height: 420px; overflow: auto; white-space: pre-wrap; }
+    .debug-panel.show { display: block; }
+    .rules-box { display: none; color: #d9d0bc; line-height: 1.55; }
+    .rules-box.show { display: block; }
+    .boss-screen { align-items: center; justify-content: center; background: radial-gradient(circle at 50% 0, #7a344b 0, #352b49 34%, #111820 72%); }
+    .boss-panel { width: min(760px, 100%); padding: 20px; border-radius: 8px; background: rgba(17,24,32,.94); border: 2px solid #f6c85f; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.38); }
+    .boss-row { display: flex; gap: 22px; justify-content: center; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+    .boss-row .avatar { width: 132px; height: 132px; margin: 0 auto 8px; }
+    .boss-name { font-size: 28px; font-weight: 900; margin: 8px 0 2px; }
+    .boss-title { color: #f6c85f; font-weight: 800; }
+    .boss-line { margin: 14px auto; max-width: 620px; color: #e5dcc9; line-height: 1.7; }
+    .modal-backdrop { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.62); z-index: 50; }
+    .modal-backdrop.show { display: flex; }
+    .modal { width: min(620px, 100%); max-height: 90vh; overflow: auto; padding: 18px; border-radius: 8px; background: #f7f1e2; color: #202832; box-shadow: 0 18px 50px rgba(0,0,0,.35); touch-action: pan-y; }
+    .modal h2 { margin: 0 0 10px; font-size: 24px; }
+    .modal p { line-height: 1.65; }
+    .options { display: grid; gap: 8px; margin: 12px 0; }
+    .option-btn { width: 100%; padding: 12px; border-radius: 8px; background: #e3d7bd; color: #202832; text-align: left; font-weight: 700; }
+    .option-btn:disabled { cursor: default; opacity: .85; }
+    .option-btn.correct { background: #a6e2b6; }
+    .option-btn.wrong { background: #f0a09a; }
+    .feedback { margin-top: 10px; padding: 10px; border-radius: 8px; background: #fff8e8; line-height: 1.65; }
+    .challenge-preview { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; margin: 12px 0; }
+    .challenge-monster { width: 96px; height: 96px; border-radius: 8px; background: #6a3a2a; position: relative; display: grid; place-items: center; overflow: hidden; border: 2px solid #d49a4c; color: #fff; font-weight: 900; }
+    .challenge-monster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .challenge-monster .op-badge { right: 5px; top: 5px; font-size: 17px; }
+    .victory-hero { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .victory-hero .avatar { width: 76px; height: 76px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+    .summary-item { padding: 8px; border-radius: 8px; background: #fff8e8; border: 1px solid #ead8ad; }
+    .history-summary { max-height: 180px; overflow: auto; padding: 8px; border-radius: 8px; background: #fff8e8; border: 1px solid #ead8ad; }
+    .compact-details { margin-top: 8px; border-radius: 8px; background: #fff8e8; border: 1px solid #ead8ad; }
+    .compact-details summary { padding: 8px 10px; font-weight: 900; cursor: pointer; }
+    .compact-details .history-summary { border: 0; border-top: 1px solid #ead8ad; border-radius: 0 0 8px 8px; margin: 0; }
+    .battle-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 14px; background: radial-gradient(circle at center, rgba(67,76,95,.92), rgba(8,12,18,.96)); z-index: 70; color: #f6f0df; overflow: hidden; }
+    .battle-overlay.show { display: flex; animation: battleFadeIn .22s ease-out; }
+    .battle-overlay.boss-battle { background: radial-gradient(circle at center, rgba(89,45,113,.94), rgba(12,8,20,.97)); }
+    .battle-card { width: min(720px, 100%); max-height: min(92dvh, 640px); overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 10px; background: rgba(17,24,32,.96); border: 2px solid #f6c85f; box-shadow: 0 22px 70px rgba(0,0,0,.45); }
+    .battle-stage { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; text-align: center; }
+    .battle-side { min-width: 0; display: grid; gap: 6px; justify-items: center; }
+    .battle-portrait { width: clamp(86px, 21vw, 138px); height: clamp(86px, 21vw, 138px); border-radius: 10px; background: #26313d; border: 2px solid rgba(255,255,255,.72); overflow: hidden; display: grid; place-items: center; color: #f6c85f; font-weight: 900; box-shadow: 0 8px 22px rgba(0,0,0,.28); }
+    .battle-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .battle-portrait.monster-side img, .battle-portrait.boss-side img { object-fit: contain; }
+    .battle-name { font-weight: 900; font-size: 15px; line-height: 1.2; }
+    .battle-sub { color: #f6c85f; font-size: 13px; line-height: 1.25; }
+    .battle-vs { font-size: clamp(24px, 8vw, 42px); font-weight: 1000; color: #fff; text-shadow: 0 0 12px rgba(246,200,95,.75); white-space: nowrap; }
+    .battle-result { display: grid; gap: 7px; padding: 10px; border-radius: 8px; background: rgba(255,248,232,.96); color: #202832; line-height: 1.45; }
+    .battle-result h3 { margin: 0; font-size: 22px; color: #1d2731; }
+    .result-pop { animation: resultPop .28s ease-out; }
+    .battle-scroll { max-height: 20dvh; overflow: auto; padding-right: 3px; }
+    .battle-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .avatar-hit { animation: avatarHit .65s ease-out; }
+    .avatar-defeat { animation: avatarDefeat .9s ease-out forwards; }
+    .avatar-flash { animation: avatarFlash .85s ease-out; }
+    .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: min(92vw, 620px); display: none; padding: 12px 16px; border-radius: 8px; background: #f6c85f; color: #1e2730; font-weight: 800; z-index: 60; box-shadow: 0 8px 25px rgba(0,0,0,.25); text-align: center; }
+    .toast.show { display: block; }
+    .flash-good { animation: flashGood .5s ease-out; }
+    .flash-bad { animation: flashBad .5s ease-out; }
+    @keyframes playerGlow { from { transform: scale(.96); filter: brightness(1.25); } to { transform: scale(1); filter: brightness(1); } }
+    @keyframes exitGlow { from { filter: brightness(1); } to { filter: brightness(1.16); } }
+    @keyframes flashGood { 0% { background: #293643; } 35% { background: #3bbf72; color: #fff; } 100% { background: #293643; } }
+    @keyframes flashBad { 0% { transform: translateX(0); background: #293643; } 25% { transform: translateX(-3px); background: #743040; } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } 100% { transform: translateX(0); background: #293643; } }
+    @keyframes monsterFloat { 0%, 100% { transform: translate(-50%, -50%) translateY(0) scale(1); } 50% { transform: translate(-50%, -50%) translateY(-2px) scale(1.035); } }
+    @keyframes battleFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes avatarHit { 0%,100% { transform: translateX(0); filter: brightness(1); } 25% { transform: translateX(-5px); filter: brightness(.75); } 55% { transform: translateX(4px); } }
+    @keyframes avatarDefeat { 0% { opacity: 1; transform: scale(1); filter: brightness(1.2); } 40% { opacity: 1; transform: scale(1.08); filter: brightness(1.8); } 100% { opacity: .18; transform: scale(.65); filter: brightness(.75); } }
+    @keyframes avatarFlash { 0%, 100% { filter: brightness(1); } 25%, 65% { filter: brightness(2); } 45% { filter: brightness(.65); } }
+    @keyframes resultPop { from { transform: scale(.96); opacity: .3; } to { transform: scale(1); opacity: 1; } }
+    .monster-avatar-idle { animation: monsterFloat 3s ease-in-out infinite; will-change: transform; }
+    @media (prefers-reduced-motion: reduce) {
+      .monster-avatar-idle, .cell.player, .cell.exit-ready, .battle-overlay.show, .avatar-hit, .avatar-defeat, .avatar-flash, .flash-good, .flash-bad { animation: none !important; }
+    }
+    @media (max-width: 820px) {
+      html, body, .app { min-height: 100dvh; }
+      .screen { padding: 8px; min-height: 100dvh; }
+      .start-screen { height: 100dvh; align-items: stretch; justify-content: flex-start; overflow: hidden; }
+      .start-panel { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+      .title { font-size: clamp(24px, 7vw, 32px); margin-bottom: 4px; }
+      .subtitle { max-width: 100%; margin-bottom: 8px; font-size: 13px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .character-grid { grid-template-columns: 1fr; }
+      .character-grid { flex: 1; min-height: 0; overflow: auto; gap: 7px; margin: 6px 0 8px; padding-right: 1px; }
+      .character-card { min-height: 0; display: grid; grid-template-columns: 62px 1fr; column-gap: 10px; align-items: center; padding: 8px; border-radius: 7px; }
+      .character-card .avatar { grid-row: 1 / span 3; width: 58px; height: 58px; margin: 0; }
+      .character-name { text-align: left; font-size: 17px; margin: 0; line-height: 1.15; }
+      .character-title { text-align: left; font-size: 12px; margin: 2px 0; line-height: 1.2; }
+      .character-desc { font-size: 12px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .start-actions { margin-top: auto; padding-top: 4px; }
+      .start-actions .primary-btn { width: 100%; padding: 11px 14px; }
+      .game-screen { height: 100dvh; min-height: 100dvh; gap: 5px; padding: 5px; overflow: hidden; }
+      .main-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 5px; }
+      .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+      .stat-grid .stat:nth-child(4), .stat-grid .stat:nth-child(5) { order: initial; grid-column: auto; }
+      .topbar { grid-template-columns: 1fr; gap: 5px; padding: 6px; border-radius: 7px; }
+      .player-summary { gap: 8px; }
+      .topbar .avatar { width: 32px; height: 32px; }
+      #topName { font-size: 15px; line-height: 1.1; }
+      #topTitle { font-size: 11px !important; line-height: 1.15; }
+      .stat { min-height: 29px; padding: 3px 3px; border-radius: 6px; }
+      .stat-label { font-size: 9px; line-height: 1; }
+      .stat-value { margin-top: 1px; font-size: 13px; line-height: 1.05; }
+      .hearts { letter-spacing: 0; }
+      .history-panel { padding: 6px 8px; border-radius: 7px; }
+      .history-title { margin: 0; font-size: 13px; cursor: pointer; }
+      .history-panel.collapsed .history-list { display: none; }
+      .history-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-top: 5px; }
+      .history-item { min-height: 26px; padding: 4px 6px; font-size: 12px; border-radius: 6px; }
+      .history-empty { font-size: 12px; margin-top: 4px; }
+      .map-wrap { flex: 1; min-height: 0; padding: 3px; overflow: visible; border-width: 2px; border-radius: 7px; align-items: center; }
+      .maze { width: min(calc(100vw - 14px), max(210px, calc(100dvh - 236px)), 620px); gap: 1.5px; padding: 2px; }
+      .cell { border-radius: 4px; }
+      .monster-avatar, .door-avatar { border-radius: 5px; }
+      .op-badge, .exit-badge { min-width: 20px; padding: 1px 3px; }
+      .side-panel { padding-bottom: 0; gap: 5px; flex-shrink: 0; }
+      .controls { position: static; z-index: 30; pointer-events: auto; padding: 5px; border-radius: 7px; }
+      .controls h3 { display: none; }
+      .dpad { width: 150px; margin: 0 auto 4px; grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(3, 38px); gap: 4px; }
+      .dpad button { font-size: 20px; border-radius: 7px; }
+      .small-btn { padding: 6px 7px; font-size: 11px; border-radius: 7px; }
+      .button-row { gap: 4px; }
+      .debug-panel.show { max-height: 34dvh; }
+      .boss-screen { height: 100dvh; min-height: 100dvh; padding: 8px; overflow: hidden; }
+      .boss-panel { padding: 12px; max-height: calc(100dvh - 16px); overflow: auto; }
+      .boss-row { gap: 12px; margin: 8px 0; }
+      .boss-row .avatar { width: 82px; height: 82px; }
+      .boss-name { font-size: 22px; margin-top: 4px; }
+      .boss-title { font-size: 13px; }
+      .boss-line { margin: 8px auto; font-size: 13px; line-height: 1.45; }
+      .modal-backdrop { padding: 8px; }
+      .modal { padding: 12px; max-height: 92dvh; width: min(560px, 100%); }
+      .modal h2 { font-size: 20px; margin-bottom: 8px; }
+      .battle-overlay { padding: 8px; }
+      .battle-card { max-height: 94dvh; gap: 8px; padding: 10px; border-radius: 8px; }
+      .battle-stage { gap: 7px; }
+      .battle-portrait { width: clamp(70px, 24vw, 96px); height: clamp(70px, 24vw, 96px); }
+      .battle-name { font-size: 13px; }
+      .battle-sub { font-size: 11px; }
+      .battle-result { padding: 8px; font-size: 13px; gap: 5px; }
+      .battle-result h3 { font-size: 18px; }
+      .battle-scroll { max-height: 22dvh; }
+      .feedback { padding: 8px; line-height: 1.45; font-size: 13px; }
+      .option-btn { min-height: 44px; padding: 10px; }
+      .challenge-preview { grid-template-columns: 72px 1fr; gap: 10px; margin: 8px 0; }
+      .challenge-monster { width: 72px; height: 72px; }
+      .victory-hero { gap: 8px; margin-bottom: 8px; }
+      .victory-hero .avatar { width: 54px; height: 54px; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin: 8px 0; }
+      .summary-item { padding: 6px; font-size: 12px; }
+      .history-summary { max-height: 24dvh; font-size: 12px; }
+      .compact-details summary { padding: 7px 8px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="startScreen" class="screen start-screen active">
+      <div class="start-panel">
+        <h1 class="title">数字地宫：迷宫突围</h1>
+        <p class="subtitle">选择一名英雄，连续突破三座数学迷宫。挑战怪物改变当前数字，只有精确等于出口目标数字，地宫大门才会打开。</p>
+        <div id="characterGrid" class="character-grid"></div>
+        <div class="start-actions">
+          <button id="startBtn" class="primary-btn">开始挑战</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen">
+      <header class="topbar">
+        <div class="player-summary">
+          <div id="topAvatar" class="avatar"></div>
+          <div>
+            <div id="topName" style="font-weight:900;"></div>
+            <div id="topTitle" style="font-size:13px;color:#f6c85f;"></div>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-label">关卡</div><div id="levelStat" class="stat-value">1</div></div>
+          <div class="stat"><div class="stat-label">当前数字</div><div id="numberStat" class="stat-value">1</div></div>
+          <div class="stat"><div class="stat-label">出口目标</div><div id="targetStat" class="stat-value">0</div></div>
+          <div class="stat"><div class="stat-label">生命</div><div id="lifeStat" class="stat-value hearts">♥♥♥♥♥</div></div>
+          <div class="stat"><div class="stat-label">步数</div><div id="stepStat" class="stat-value">0</div></div>
+        </div>
+      </header>
+
+      <section class="history-panel">
+        <div class="history-title">运算记录</div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+
+      <main class="main-layout">
+        <div class="map-wrap"><div id="maze" class="maze"></div></div>
+        <aside class="side-panel">
+          <div class="controls">
+            <h3>移动</h3>
+            <div class="dpad">
+              <button class="up" data-dir="up" aria-label="上">↑</button>
+              <button class="left" data-dir="left" aria-label="左">←</button>
+              <button class="right" data-dir="right" aria-label="右">→</button>
+              <button class="down" data-dir="down" aria-label="下">↓</button>
+            </div>
+            <div class="button-row">
+              <button id="restartBtn" class="small-btn secondary-btn">重新开始</button>
+              <button id="rulesBtn" class="small-btn secondary-btn">规则说明</button>
+              <button id="debugBtn" class="small-btn secondary-btn">调试面板</button>
+            </div>
+          </div>
+          <div id="rulesBox" class="rules-box">
+            <h3>规则</h3>
+            <div>移动到怪物格会答题。答对吸收运算并让怪物消失；答错生命 -1 并退回原位。当前数字等于出口目标时才能过关。生命为 0 时整局失败。</div>
+          </div>
+          <div id="debugPanel" class="debug-panel"></div>
+        </aside>
+      </main>
+    </section>
+
+    <section id="bossScreen" class="screen boss-screen">
+      <div class="boss-panel">
+        <div class="boss-row">
+          <div>
+            <div id="bossAvatar" class="avatar"></div>
+            <div class="boss-name">暗算魔王</div>
+            <div class="boss-title">数字地宫的最终守门人</div>
+          </div>
+          <div>
+            <div id="bossPlayerAvatar" class="avatar"></div>
+            <div id="bossPlayerName" style="font-size:20px;font-weight:900;"></div>
+            <div id="bossLife" class="hearts" style="font-size:22px;margin-top:6px;"></div>
+          </div>
+        </div>
+        <p class="boss-line">你已经走到这里了，但只有真正掌握数字规律的人，才能离开我的地宫！</p>
+        <button id="bossStartBtn" class="primary-btn">开始最终挑战</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div id="modal" class="modal"></div>
+  </div>
+  <div id="battleOverlay" class="battle-overlay" aria-hidden="true">
+    <div id="battleCard" class="battle-card"></div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const characters = [
+      { id: 1, name: "陈小铭", title: "热血旋风少年", desc: "从来没有人见过他失败，因为他从来不会失败。", img: "hero1.png" },
+      { id: 2, name: "王大蔚", title: "冷眼天才少年", desc: "从来没有人见过他成功，因为他偷偷成功。", img: "hero2.png" },
+      { id: 3, name: "王巨蓝", title: "神秘智慧导师", desc: "从来没有人见过他哭，因为他不爱哭。", img: "hero3.png" }
+    ];
+
+    const levels = [
+      { level: 1, size: 7, monsterCount: 5, pathMin: 3, pathMax: 4, targetMin: 20, targetMax: 40 },
+      { level: 2, size: 9, monsterCount: 6, pathMin: 5, pathMax: 6, targetMin: 40, targetMax: 80 },
+      { level: 3, size: 11, monsterCount: 7, pathMin: 7, pathMax: 8, targetMin: 60, targetMax: 120 }
+    ];
+
+    const questionBank = [
+      { q: "36 ÷ 4 + 7 × 3 = ?", options: [30, 32, 34, 36], answer: 0, exp: "先算乘除：36 ÷ 4 = 9，7 × 3 = 21。\n再算加法：9 + 21 = 30。" },
+      { q: "48 - 6 × 5 + 18 ÷ 3 = ?", options: [20, 22, 24, 26], answer: 2, exp: "先算乘除：6 × 5 = 30，18 ÷ 3 = 6。\n再算 48 - 30 + 6 = 24。" },
+      { q: "96 ÷ 4 + 7 × 3 = ?", options: [43, 45, 47, 49], answer: 1, exp: "先算 96 ÷ 4 = 24，7 × 3 = 21。\n最后 24 + 21 = 45。" },
+      { q: "72 ÷ (9 - 3) × 4 = ?", options: [36, 42, 48, 54], answer: 2, exp: "先算括号：9 - 3 = 6。\n72 ÷ 6 = 12，12 × 4 = 48。" },
+      { q: "125 × 8 = ?", options: [900, 960, 1000, 1080], answer: 2, exp: "125 × 8 可以看作 1000。\n因为 125 是 1000 的八分之一。" },
+      { q: "540 ÷ 9 - 18 = ?", options: [38, 40, 42, 44], answer: 2, exp: "先算除法：540 ÷ 9 = 60。\n再算 60 - 18 = 42。" },
+      { q: "一个长方形长 12 米，宽 8 米，周长是多少米？", options: [20, 40, 96, 48], answer: 1, exp: "长方形周长 = (长 + 宽) × 2。\n(12 + 8) × 2 = 40 米。" },
+      { q: "一个长方形长 15 厘米，宽 6 厘米，面积是多少平方厘米？", options: [42, 84, 90, 96], answer: 2, exp: "长方形面积 = 长 × 宽。\n15 × 6 = 90 平方厘米。" },
+      { q: "一个正方形面积是 81 平方厘米，边长是多少厘米？", options: [8, 9, 10, 18], answer: 1, exp: "正方形面积 = 边长 × 边长。\n9 × 9 = 81，所以边长是 9 厘米。" },
+      { q: "一块正方形花坛边长 14 米，它的周长是多少米？", options: [42, 48, 56, 64], answer: 2, exp: "正方形周长 = 边长 × 4。\n14 × 4 = 56 米。" },
+      { q: "5 千米 300 米等于多少米？", options: [530, 5030, 5300, 3500], answer: 2, exp: "1 千米 = 1000 米。\n5 千米 = 5000 米，再加 300 米，共 5300 米。" },
+      { q: "3 吨 80 千克等于多少千克？", options: [308, 380, 3008, 3080], answer: 3, exp: "1 吨 = 1000 千克。\n3 吨 = 3000 千克，再加 80 千克，共 3080 千克。" },
+      { q: "2 小时 15 分钟等于多少分钟？", options: [115, 125, 135, 145], answer: 2, exp: "1 小时 = 60 分钟。\n2 小时 = 120 分钟，再加 15 分钟，共 135 分钟。" },
+      { q: "480 分钟等于多少小时？", options: [6, 7, 8, 9], answer: 2, exp: "1 小时 = 60 分钟。\n480 ÷ 60 = 8 小时。" },
+      { q: "68 ÷ 6 的商和余数分别是？", options: ["10 余 8", "11 余 2", "12 余 4", "11 余 4"], answer: 1, exp: "6 × 11 = 66。\n68 - 66 = 2，所以商 11 余 2。" },
+      { q: "如果 A ÷ 9 = 7 余 4，那么 A 是多少？", options: [59, 63, 67, 70], answer: 2, exp: "被除数 = 除数 × 商 + 余数。\n9 × 7 + 4 = 67。" },
+      { q: "86 个苹果每 8 个装一袋，最多装满几袋，还剩几个？", options: ["10 袋余 4 个", "10 袋余 6 个", "11 袋余 2 个", "12 袋余 2 个"], answer: 1, exp: "8 × 10 = 80。\n86 - 80 = 6，所以装满 10 袋，还剩 6 个。" },
+      { q: "一个数乘 4 后再加 6 等于 38，这个数是多少？", options: [7, 8, 9, 10], answer: 1, exp: "先逆向减 6：38 - 6 = 32。\n再除以 4：32 ÷ 4 = 8。" },
+      { q: "某数加 18 后除以 6，结果是 9。这个数是多少？", options: [34, 36, 38, 40], answer: 1, exp: "逆向先乘 6：9 × 6 = 54。\n再减 18：54 - 18 = 36。" },
+      { q: "一个数减 15 后是 27 的 3 倍，这个数是多少？", options: [86, 94, 96, 102], answer: 2, exp: "27 的 3 倍是 27 × 3 = 81。\n这个数是 81 + 15 = 96。" },
+      { q: "学校买了 6 盒彩笔，每盒 24 支，平均分给 8 个小组，每组几支？", options: [16, 18, 20, 22], answer: 1, exp: "先算总数：6 × 24 = 144 支。\n再平均分：144 ÷ 8 = 18 支。" },
+      { q: "一本书 128 页，小林每天看 16 页，看了 5 天，还剩多少页？", options: [32, 40, 48, 56], answer: 2, exp: "5 天看了 16 × 5 = 80 页。\n还剩 128 - 80 = 48 页。" },
+      { q: "4 个班共植树 168 棵，每班人数相同，每班 7 组，平均每组植树几棵？", options: [4, 5, 6, 7], answer: 2, exp: "一共有 4 × 7 = 28 组。\n168 ÷ 28 = 6 棵。" },
+      { q: "72 与 18 的和除以 9，结果是多少？", options: [8, 10, 12, 14], answer: 1, exp: "先算和：72 + 18 = 90。\n再算 90 ÷ 9 = 10。" },
+      { q: "三个连续偶数的和是 48，中间的数是多少？", options: [14, 16, 18, 20], answer: 1, exp: "三个连续偶数可以看成中间数的 3 倍。\n48 ÷ 3 = 16。" },
+      { q: "36 的 4 倍比 150 少多少？", options: [4, 6, 8, 10], answer: 1, exp: "36 的 4 倍是 36 × 4 = 144。\n150 - 144 = 6。" },
+      { q: "一个数的 5 倍是 95，这个数的 3 倍是多少？", options: [54, 57, 60, 63], answer: 1, exp: "这个数是 95 ÷ 5 = 19。\n它的 3 倍是 19 × 3 = 57。" },
+      { q: "妈妈买 4 千克苹果花 32 元，买 7 千克同样的苹果要多少元？", options: [48, 52, 56, 60], answer: 2, exp: "每千克苹果 32 ÷ 4 = 8 元。\n7 千克需要 8 × 7 = 56 元。" },
+      { q: "一辆车 3 小时行 216 千米，照这样 5 小时行多少千米？", options: [320, 340, 360, 380], answer: 2, exp: "每小时行 216 ÷ 3 = 72 千米。\n5 小时行 72 × 5 = 360 千米。" },
+      { q: "18 × 25 × 4 = ?", options: [1600, 1800, 2000, 2200], answer: 1, exp: "先算 25 × 4 = 100。\n18 × 100 = 1800。" },
+      { q: "640 ÷ 16 = ?", options: [30, 35, 40, 45], answer: 2, exp: "16 × 40 = 640。\n所以 640 ÷ 16 = 40。" },
+      { q: "一个长方形周长 54 厘米，长 18 厘米，宽是多少厘米？", options: [7, 8, 9, 10], answer: 2, exp: "长加宽 = 54 ÷ 2 = 27。\n宽 = 27 - 18 = 9 厘米。" }
+    ];
+
+    const bossQuestionBank = [
+      { q: "甲数是乙数的 3 倍，甲乙两数的和是 96。甲数是多少？", options: [24, 48, 72, 84], answer: 2, exp: "把乙数看作 1 份，甲数就是 3 份，总共 4 份。\n96 ÷ 4 = 24，甲数 = 24 × 3 = 72。" },
+      { q: "一个长方形长增加 5 米后变成 17 米，面积增加 45 平方米。原来长方形的宽是多少米？", options: [8, 9, 10, 12], answer: 1, exp: "增加的面积是一条长 5 米、宽等于原宽的长方形。\n45 ÷ 5 = 9 米，所以原来的宽是 9 米。" },
+      { q: "某数先乘 6，再减 18，最后除以 3，结果是 34。这个数是多少？", options: [18, 20, 22, 24], answer: 1, exp: "逆向思考：34 × 3 = 102。\n102 + 18 = 120，120 ÷ 6 = 20。" },
+      { q: "甲、乙两筐苹果共 132 个，甲筐比乙筐多 24 个。甲筐有多少个？", options: [54, 66, 78, 84], answer: 2, exp: "先把多出的 24 个去掉：132 - 24 = 108。\n两筐一样多时每筐 108 ÷ 2 = 54。\n甲筐是 54 + 24 = 78 个。" },
+      { q: "一个正方形和一个长方形周长相等。正方形边长 12 厘米，长方形长 16 厘米，宽是多少厘米？", options: [6, 7, 8, 9], answer: 2, exp: "正方形周长是 12 × 4 = 48 厘米。\n长方形长加宽是 48 ÷ 2 = 24。\n宽 = 24 - 16 = 8 厘米。" },
+      { q: "一批书每箱装 24 本，可以装 15 箱。如果改成每箱装 18 本，可以装多少箱？", options: [18, 20, 22, 24], answer: 1, exp: "书的总数是 24 × 15 = 360 本。\n360 ÷ 18 = 20 箱。" },
+      { q: "小明做一道题，把一个数乘 5 误看成加 5，得到 37。正确结果是多少？", options: [145, 155, 160, 165], answer: 2, exp: "误算得到 37，说明原数 + 5 = 37。\n原数是 32，正确结果是 32 × 5 = 160。" },
+      { q: "从 1 开始，先加 11，再乘 6，再除以 4，最后减 5，结果是多少？", options: [12, 13, 14, 15], answer: 1, exp: "1 + 11 = 12。\n12 × 6 = 72，72 ÷ 4 = 18。\n18 - 5 = 13。" },
+      { q: "一条路长 960 米，已经修了 3 天，每天修 180 米。剩下的要 7 天修完，平均每天修多少米？", options: [50, 55, 60, 65], answer: 2, exp: "已经修了 180 × 3 = 540 米。\n还剩 960 - 540 = 420 米。\n420 ÷ 7 = 60 米。" },
+      { q: "四个连续奇数的和是 160，最大的那个奇数是多少？", options: [37, 39, 41, 43], answer: 3, exp: "四个连续奇数可设为 37、39、41、43。\n它们的和是 160。\n最大的奇数是 43。" }
+    ];
+
+    questionBank.push(...buildExtraQuestionBank());
+    bossQuestionBank.push(...buildExtraBossQuestionBank());
+    assignQuestionDifficulties();
+
+    function assignQuestionDifficulties() {
+      questionBank.forEach((q, i) => {
+        if (q.difficulty) return;
+        q.difficulty = i < 18 ? 1 : (i < 58 ? 2 : 3);
+      });
+      bossQuestionBank.forEach(q => {
+        q.difficulty = 4;
+      });
+    }
+
+    function makeQuestion(q, correct, distractors, exp) {
+      const merged = [correct, ...distractors].map(String);
+      const unique = [];
+      merged.forEach(item => {
+        if (!unique.includes(item)) unique.push(item);
+      });
+      let bump = 2;
+      while (unique.length < 4) {
+        const next = String(Number(correct) + bump);
+        if (!unique.includes(next)) unique.push(next);
+        bump += 2;
+      }
+      const options = unique.slice(0, 4);
+      const answer = options.indexOf(String(correct));
+      return { q, options, answer, exp };
+    }
+
+    function buildExtraQuestionBank() {
+      const qs = [];
+      [
+        [84, 7, 6, 5], [96, 8, 7, 4], [108, 9, 5, 6], [126, 6, 8, 3], [144, 12, 4, 7], [168, 8, 9, 5]
+      ].forEach(([a, b, c, d]) => {
+        const correct = a / b + c * d;
+        qs.push(makeQuestion(`${a} ÷ ${b} + ${c} × ${d} = ?`, correct, [correct - 4, correct + 3, correct + 6], `先算除法和乘法：${a} ÷ ${b} = ${a / b}，${c} × ${d} = ${c * d}。\n再相加：${a / b} + ${c * d} = ${correct}。`));
+      });
+      [
+        [150, 6, 8, 4], [180, 9, 7, 5], [210, 10, 6, 8], [240, 12, 9, 6], [270, 9, 8, 7], [288, 12, 5, 9]
+      ].forEach(([a, b, c, d]) => {
+        const correct = a / b - c + d;
+        qs.push(makeQuestion(`${a} ÷ ${b} - ${c} + ${d} = ?`, correct, [correct - 3, correct + 2, correct + 5], `先算除法：${a} ÷ ${b} = ${a / b}。\n再从左到右算：${a / b} - ${c} + ${d} = ${correct}。`));
+      });
+      [
+        [16, 9], [18, 7], [21, 8], [24, 6], [27, 5], [32, 4]
+      ].forEach(([len, wid]) => {
+        const correct = len * wid;
+        qs.push(makeQuestion(`长方形长 ${len} 厘米，宽 ${wid} 厘米，面积是多少平方厘米？`, correct, [correct - len, correct + wid, (len + wid) * 2], `长方形面积 = 长 × 宽。\n${len} × ${wid} = ${correct} 平方厘米。`));
+      });
+      [
+        [72, 18], [88, 26], [96, 30], [112, 34], [128, 44], [144, 52]
+      ].forEach(([perimeter, len]) => {
+        const correct = perimeter / 2 - len;
+        qs.push(makeQuestion(`长方形周长 ${perimeter} 厘米，长 ${len} 厘米，宽是多少厘米？`, correct, [correct - 2, correct + 2, correct + 4], `长加宽 = ${perimeter} ÷ 2 = ${perimeter / 2}。\n宽 = ${perimeter / 2} - ${len} = ${correct} 厘米。`));
+      });
+      [
+        [4, 250, 4250], [6, 80, 6080], [7, 305, 7305], [9, 40, 9040], [3, 608, 3608], [8, 120, 8120]
+      ].forEach(([km, m, correct]) => {
+        qs.push(makeQuestion(`${km} 千米 ${m} 米等于多少米？`, correct, [correct - 100, correct + 100, km * 100 + m], `1 千米 = 1000 米。\n${km} 千米 = ${km * 1000} 米，再加 ${m} 米，共 ${correct} 米。`));
+      });
+      [
+        [95, 8], [113, 9], [137, 11], [158, 12], [179, 13], [206, 15]
+      ].forEach(([total, each]) => {
+        const q = Math.floor(total / each);
+        const r = total % each;
+        qs.push(makeQuestion(`${total} 本练习本每 ${each} 本一包，最多包几包，还剩几本？`, `${q} 包余 ${r} 本`, [`${q} 包余 ${r + 1} 本`, `${q + 1} 包余 ${Math.max(0, r - each)} 本`, `${q - 1} 包余 ${r + each} 本`], `${each} × ${q} = ${each * q}。\n${total} - ${each * q} = ${r}，所以是 ${q} 包余 ${r} 本。`));
+      });
+      [
+        [6, 14, 92], [7, 18, 123], [5, 27, 112], [8, 16, 152], [9, 21, 210], [4, 35, 171]
+      ].forEach(([mul, add, result]) => {
+        const correct = (result - add) / mul;
+        qs.push(makeQuestion(`一个数乘 ${mul} 后再加 ${add} 等于 ${result}，这个数是多少？`, correct, [correct - 2, correct + 2, correct + 4], `先逆向减 ${add}：${result} - ${add} = ${result - add}。\n再除以 ${mul}：${result - add} ÷ ${mul} = ${correct}。`));
+      });
+      [
+        [18, 5, 14], [24, 4, 19], [16, 6, 11], [21, 5, 16], [28, 3, 25], [32, 4, 22]
+      ].forEach(([per, count, sold]) => {
+        const correct = per * count - sold;
+        qs.push(makeQuestion(`每盒有 ${per} 支铅笔，买了 ${count} 盒，用掉 ${sold} 支，还剩多少支？`, correct, [correct - per, correct + sold, correct + count], `先算总数：${per} × ${count} = ${per * count} 支。\n再减去用掉的：${per * count} - ${sold} = ${correct} 支。`));
+      });
+      [
+        [12, 4], [15, 5], [18, 6], [21, 7], [24, 8], [27, 9]
+      ].forEach(([middle, gap]) => {
+        const total = (middle - gap) + middle + (middle + gap);
+        qs.push(makeQuestion(`三个数相差都为 ${gap}，中间数是 ${middle}，这三个数的和是多少？`, total, [total - gap, total + gap, middle * 2], `三个数是 ${middle - gap}、${middle}、${middle + gap}。\n相加得 ${middle - gap} + ${middle} + ${middle + gap} = ${total}。`));
+      });
+      return qs;
+    }
+
+    function buildExtraBossQuestionBank() {
+      const qs = [];
+      [
+        [156, 28], [184, 36], [212, 48], [240, 54], [268, 62]
+      ].forEach(([sum, diff]) => {
+        const big = (sum + diff) / 2;
+        qs.push(makeQuestion(`甲乙两数的和是 ${sum}，甲数比乙数多 ${diff}。甲数是多少？`, big, [big - diff, big - 6, big + 6], `先把多出的 ${diff} 加到总和里：${sum} + ${diff} = ${sum + diff}。\n甲数占其中一半：${sum + diff} ÷ 2 = ${big}。`));
+      });
+      [
+        [18, 6, 72], [20, 5, 75], [24, 8, 96], [27, 6, 90], [30, 7, 105]
+      ].forEach(([len, inc, areaInc]) => {
+        const wid = areaInc / inc;
+        qs.push(makeQuestion(`长方形长 ${len} 米，长增加 ${inc} 米后，面积增加 ${areaInc} 平方米。原来的宽是多少米？`, wid, [wid - 2, wid + 2, wid + 4], `增加的面积是一条长 ${inc} 米、宽等于原宽的长方形。\n${areaInc} ÷ ${inc} = ${wid} 米。`));
+      });
+      [
+        [7, 18, 5, 47], [6, 24, 4, 51], [8, 16, 6, 36], [9, 21, 3, 67], [5, 35, 7, 35]
+      ].forEach(([mul, add, div, result]) => {
+        const correct = (result * div - add) / mul;
+        qs.push(makeQuestion(`某数先乘 ${mul}，再加 ${add}，最后除以 ${div}，结果是 ${result}。这个数是多少？`, correct, [correct - 3, correct + 3, correct + 6], `逆向先乘 ${div}：${result} × ${div} = ${result * div}。\n再减 ${add}，得 ${result * div - add}。\n最后除以 ${mul}：${result * div - add} ÷ ${mul} = ${correct}。`));
+      });
+      [
+        [32, 18, 9], [36, 24, 8], [40, 16, 12], [45, 25, 10], [48, 30, 6]
+      ].forEach(([speed, slow, hours]) => {
+        const correct = (speed - slow) * hours;
+        qs.push(makeQuestion(`甲车每小时行 ${speed} 千米，乙车每小时行 ${slow} 千米，同时同地反向出发，${hours} 小时后相距多少千米？`, correct, [correct - speed, correct + slow, correct + speed], `反向出发每小时相距 ${speed} + ${slow} 千米。\n${speed + slow} × ${hours} = ${(speed + slow) * hours} 千米。\n注意题目说反向，所以应为 ${(speed + slow) * hours} 千米。`.replace(String(correct), String((speed + slow) * hours))));
+      });
+      qs.splice(-5, 5,
+        makeQuestion("甲车每小时 42 千米，乙车每小时 36 千米，同时同地相反方向出发，5 小时后相距多少千米？", 390, [210, 360, 400], "相反方向要把速度相加：42 + 36 = 78。\n5 小时相距 78 × 5 = 390 千米。"),
+        makeQuestion("一块长方形地长 36 米，宽 24 米。如果长和宽都减少 6 米，新面积是多少平方米？", 540, [648, 720, 600], "新长是 36 - 6 = 30 米，新宽是 24 - 6 = 18 米。\n新面积是 30 × 18 = 540 平方米。"),
+        makeQuestion("一批零件，12 人每人做 18 个还差 24 个。这批零件共有多少个？", 240, [216, 228, 252], "12 人一共做 12 × 18 = 216 个。\n还差 24 个，所以总数是 216 + 24 = 240 个。"),
+        makeQuestion("从 1 开始，先加 14，再乘 8，再除以 5，最后减 9，结果是多少？", 15, [13, 17, 21], "1 + 14 = 15，15 × 8 = 120。\n120 ÷ 5 = 24，24 - 9 = 15。"),
+        makeQuestion("四个连续偶数的和是 180，最大的那个偶数是多少？", 48, [44, 46, 50], "四个连续偶数平均数是 180 ÷ 4 = 45。\n它们是 42、44、46、48，所以最大是 48。")
+      );
+      return qs;
+    }
+
+    const gameState = {
+      screen: "start",
+      selectedCharacter: null,
+      levelIndex: 0,
+      lives: 5,
+      currentNumber: 1,
+      targetNumber: 0,
+      steps: 0,
+      map: [],
+      player: { x: 1, y: 1 },
+      exit: { x: 0, y: 0 },
+      monsters: [],
+      hiddenPath: [],
+      operationHistory: [],
+      levelResults: [],
+      usedQuestionIds: [],
+      pendingEncounter: null,
+      debugVisible: false,
+      rulesVisible: false,
+      historyExpanded: false,
+      tutorialDismissed: false
+    };
+
+    const bossState = {
+      active: false,
+      question: null,
+      answered: false,
+      attempts: 0
+    };
+
+    const inputState = {
+      locked: false,
+      lastDirectInputAt: 0
+    };
+
+    function initGame() {
+      renderCharacterCards();
+      document.getElementById("startBtn").addEventListener("click", startRun);
+      document.getElementById("restartBtn").addEventListener("click", () => showConfirmRestart());
+      document.getElementById("rulesBtn").addEventListener("click", showRulesModal);
+      document.getElementById("debugBtn").addEventListener("click", () => {
+        gameState.debugVisible = !gameState.debugVisible;
+        render();
+      });
+      document.getElementById("bossStartBtn").addEventListener("click", startBossChallenge);
+      document.querySelector(".history-title").addEventListener("click", () => {
+        gameState.historyExpanded = !gameState.historyExpanded;
+        renderOperationHistory();
+      });
+      bindInputControls();
+      window.addEventListener("keydown", handleKeyDown);
+      render();
+    }
+
+    function bindInputControls() {
+      document.querySelectorAll(".dpad button").forEach(btn => {
+        ["touchstart", "pointerdown", "click"].forEach(eventName => {
+          btn.addEventListener(eventName, event => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleDirectionInput(btn.dataset.dir, eventName);
+          }, { passive: false });
+        });
+      });
+
+    }
+
+    function handleDirectionInput(direction, source = "unknown") {
+      const now = Date.now();
+      if (source === "click" && now - inputState.lastDirectInputAt < 450) return;
+      if (source === "touchstart" || source === "pointerdown") inputState.lastDirectInputAt = now;
+      if (!direction || inputState.locked || !canAcceptMoveInput()) return;
+      inputState.locked = true;
+      setTimeout(() => {
+        inputState.locked = false;
+      }, 150);
+      movePlayer(direction);
+    }
+
+    function canAcceptMoveInput() {
+      return gameState.screen === "game"
+        && !bossState.active
+        && !document.getElementById("modalBackdrop").classList.contains("show")
+        && !document.getElementById("battleOverlay").classList.contains("show");
+    }
+
+    function renderCharacterCards() {
+      const grid = document.getElementById("characterGrid");
+      grid.innerHTML = "";
+      characters.forEach(ch => {
+        const card = document.createElement("button");
+        card.className = "character-card";
+        card.addEventListener("click", () => selectCharacter(ch.id));
+        card.innerHTML = `
+          <div class="avatar">${avatarHtml(ch, "英雄")}</div>
+          <div class="character-name">${ch.name}</div>
+          <div class="character-title">${ch.title}</div>
+          <div class="character-desc">${ch.desc}</div>
+        `;
+        card.dataset.characterId = ch.id;
+        grid.appendChild(card);
+      });
+    }
+
+    function selectCharacter(id) {
+      gameState.selectedCharacter = characters.find(ch => ch.id === id);
+      document.querySelectorAll(".character-card").forEach(card => {
+        card.classList.toggle("selected", Number(card.dataset.characterId) === id);
+      });
+    }
+
+    function startRun() {
+      if (!gameState.selectedCharacter) {
+        showToast("请先选择角色");
+        return;
+      }
+      gameState.lives = 5;
+      gameState.levelIndex = 0;
+      gameState.steps = 0;
+      gameState.operationHistory = [];
+      gameState.levelResults = [];
+      gameState.usedQuestionIds = [];
+      gameState.historyExpanded = false;
+      bossState.active = false;
+      bossState.attempts = 0;
+      startLevel(0);
+      showTutorialIfNeeded();
+    }
+
+    function startLevel(index) {
+      gameState.screen = "game";
+      gameState.levelIndex = index;
+      gameState.currentNumber = 1;
+      gameState.steps = 0;
+      gameState.pendingEncounter = null;
+      gameState.operationHistory = gameState.operationHistory.filter(item => item.level !== index + 1);
+      gameState.levelResults[index] = null;
+      generateLevel(levels[index]);
+      render();
+    }
+
+    function generateLevel(config) {
+      const result = generateSolvablePath(config);
+      gameState.hiddenPath = result.path;
+      gameState.targetNumber = result.target;
+      gameState.map = generateMaze(config.size);
+      gameState.player = { x: 1, y: 1 };
+      gameState.exit = { x: config.size - 2, y: config.size - 2 };
+      gameState.map[gameState.player.y][gameState.player.x] = 0;
+      gameState.map[gameState.exit.y][gameState.exit.x] = 0;
+      gameState.monsters = spawnMonsters(config, result.path);
+    }
+
+    function generateSolvablePath(config) {
+      const ops = getPathOperationPool(config.level);
+      for (let attempt = 0; attempt < 2000; attempt++) {
+        let current = 1;
+        const path = [];
+        const len = randInt(config.pathMin, Math.min(config.pathMax, config.monsterCount));
+        for (let i = 0; i < len; i++) {
+          const legal = [];
+          ops.forEach(op => {
+            op.values.forEach(v => {
+              const next = calcOperation(current, op.type, v);
+              if (next >= 1 && Number.isInteger(next) && next <= config.targetMax + 40) {
+                legal.push({ op: op.type, value: v, before: current, after: next });
+              }
+            });
+          });
+          const picked = randomItem(legal);
+          current = picked.after;
+          path.push(picked);
+        }
+        if (current >= config.targetMin && current <= config.targetMax) {
+          return { path, target: current };
+        }
+      }
+      // 兜底路径，保证一定能得到本关范围内的目标数。
+      const fallbackByLevel = {
+        1: [{op:"+",value:9},{op:"×",value:3},{op:"-",value:4}],
+        2: [{op:"+",value:9},{op:"×",value:4},{op:"+",value:12},{op:"÷",value:2},{op:"×",value:2}],
+        3: [{op:"+",value:9},{op:"×",value:5},{op:"+",value:10},{op:"÷",value:2},{op:"×",value:3},{op:"-",value:5},{op:"+",value:20}]
+      };
+      let current = 1;
+      const path = fallbackByLevel[config.level].map(step => {
+        const before = current;
+        current = calcOperation(current, step.op, step.value);
+        return { ...step, before, after: current };
+      });
+      return { path, target: current };
+    }
+
+    function getPathOperationPool(level) {
+      if (level === 1) {
+        return [
+          { type: "+", values: [4,5,6,7,8,9,10,12] },
+          { type: "×", values: [2,2,3] },
+          { type: "-", values: [1,2,3] },
+          { type: "÷", values: [2] }
+        ];
+      }
+      if (level === 2) {
+        return [
+          { type: "+", values: [4,5,6,7,8,9,10,12,15] },
+          { type: "-", values: [1,2,3,4,5,6] },
+          { type: "×", values: [2,3,4] },
+          { type: "÷", values: [2,3,4] }
+        ];
+      }
+      return [
+        { type: "+", values: [3,4,5,6,7,8,9,10,12,15] },
+        { type: "-", values: [1,2,3,4,5,6,8] },
+        { type: "×", values: [2,3,4,5] },
+        { type: "÷", values: [2,3,4,5] }
+      ];
+    }
+
+    function generateMaze(size) {
+      const map = Array.from({ length: size }, (_, y) =>
+        Array.from({ length: size }, (_, x) => (x === 0 || y === 0 || x === size - 1 || y === size - 1 ? 1 : 0))
+      );
+      // 少量随机墙，只在内部摆放，并保留一条沿左侧和下侧通向出口的稳定通路。
+      for (let y = 1; y < size - 1; y++) {
+        for (let x = 1; x < size - 1; x++) {
+          const reservedPath = x === 1 || y === size - 2;
+          const important = (x === 1 && y === 1) || (x === size - 2 && y === size - 2);
+          if (!reservedPath && !important && Math.random() < 0.13) map[y][x] = 1;
+        }
+      }
+      return map;
+    }
+
+    function spawnMonsters(config, hiddenPath) {
+      const monsters = [];
+      const used = new Set([key(gameState.player.x, gameState.player.y), key(gameState.exit.x, gameState.exit.y)]);
+      const keyPositions = selectDistributedKeyPositions(hiddenPath.length, used, config);
+
+      // 关键怪物来自隐藏可行路径，但位置按区域分散，避免排成直线。
+      hiddenPath.forEach((step, index) => {
+        const pos = keyPositions[index] || findFreeCell(used);
+        used.add(key(pos.x, pos.y));
+        monsters.push(createMonster(pos.x, pos.y, step.op, step.value, true));
+      });
+
+      while (monsters.length < config.monsterCount) {
+        const pos = findFreeCell(used);
+        if (!pos) break;
+        used.add(key(pos.x, pos.y));
+        const op = randomDistractorOperation("initial");
+        monsters.push(createMonster(pos.x, pos.y, op.op, op.value, false));
+      }
+      return monsters;
+    }
+
+    function selectDistributedKeyPositions(count, used, config) {
+      const regions = shuffle(getLevelRegions(config.size).slice());
+      const minRegions = config.level === 1 ? 2 : (config.level === 2 ? 3 : 4);
+      const positions = [];
+      for (let i = 0; i < count; i++) {
+        const region = regions[i % Math.max(minRegions, 1)];
+        let pos = findCellInRegion(region, used, positions, config, true);
+        if (!pos) pos = findCellInRegion(region, used, positions, config, false);
+        if (!pos) pos = findFreeCell(used);
+        if (pos) {
+          positions.push(pos);
+          used.add(key(pos.x, pos.y));
+        }
+      }
+      return positions;
+    }
+
+    function getLevelRegions(size) {
+      const max = size - 2;
+      const mid = Math.floor(size / 2);
+      return [
+        { name: "左上", x1: 1, x2: mid, y1: 1, y2: mid },
+        { name: "右上", x1: mid, x2: max, y1: 1, y2: mid },
+        { name: "中央", x1: Math.max(1, mid - 1), x2: Math.min(max, mid + 1), y1: Math.max(1, mid - 1), y2: Math.min(max, mid + 1) },
+        { name: "左下", x1: 1, x2: mid, y1: mid, y2: max },
+        { name: "右下", x1: mid, x2: max, y1: mid, y2: max }
+      ];
+    }
+
+    function findCellInRegion(region, used, placed, config, strict) {
+      const reachable = getReachableCells();
+      const cells = [];
+      for (let y = region.y1; y <= region.y2; y++) {
+        for (let x = region.x1; x <= region.x2; x++) {
+          const k = key(x, y);
+          if (!insideMap(x, y) || gameState.map[y][x] === 1 || used.has(k) || !reachable.has(k)) continue;
+          const onObviousRoute = x === 1 || y === config.size - 2;
+          const tooClose = placed.some(pos => Math.abs(pos.x - x) + Math.abs(pos.y - y) <= 1);
+          if (strict && (tooClose || (config.level >= 2 && onObviousRoute))) continue;
+          cells.push({ x, y });
+        }
+      }
+      return cells.length ? randomItem(cells) : null;
+    }
+
+    function spawnReplacementMonster() {
+      const occupied = new Set([
+        key(gameState.player.x, gameState.player.y),
+        key(gameState.exit.x, gameState.exit.y),
+        ...gameState.monsters.map(m => key(m.x, m.y))
+      ]);
+      const pos = findFreeCell(occupied);
+      if (!pos) return;
+      const op = randomDistractorOperation("replacement");
+      gameState.monsters.push(createMonster(pos.x, pos.y, op.op, op.value, false));
+    }
+
+    function createMonster(x, y, op, value, keyMonster) {
+      return {
+        id: Date.now() + Math.random(),
+        x, y, op, value, keyMonster,
+        label: op + value,
+        usedQuestionIds: []
+      };
+    }
+
+    function movePlayer(dir) {
+      if (gameState.screen !== "game" || document.getElementById("modalBackdrop").classList.contains("show") || document.getElementById("battleOverlay").classList.contains("show")) return;
+      const delta = { up: [0,-1], down: [0,1], left: [-1,0], right: [1,0] }[dir];
+      if (!delta) return;
+      const next = { x: gameState.player.x + delta[0], y: gameState.player.y + delta[1] };
+      if (!insideMap(next.x, next.y) || gameState.map[next.y][next.x] === 1) {
+        showToast("这里是墙，不能前进。");
+        return;
+      }
+      const prev = { ...gameState.player };
+      const monster = monsterAt(next.x, next.y);
+      if (monster) {
+        handleMonsterEncounter(monster, prev, next);
+        return;
+      }
+      gameState.player = next;
+      gameState.steps++;
+      if (next.x === gameState.exit.x && next.y === gameState.exit.y) {
+        checkExit(prev);
+      }
+      render();
+    }
+
+    function handleMonsterEncounter(monster, prev, next) {
+      if (monster.op === "÷" && gameState.currentNumber % monster.value !== 0) {
+        showToast(`当前数字不能被 ${monster.value} 整除，无法挑战这个怪物。`);
+        gameState.player = prev;
+        return;
+      }
+      if (monster.op === "-" && gameState.currentNumber - monster.value < 1) {
+        showToast("这个运算会让能量低于 1，无法吸收。");
+        gameState.player = prev;
+        return;
+      }
+      gameState.pendingEncounter = { monster, prev, next, question: null };
+      showMonsterConfirmModal(monster, prev, next);
+    }
+
+    function generateQuestion(monster) {
+      let available = getQuestionCandidates()
+        .filter(q => !monster.usedQuestionIds.includes(q.id) && !gameState.usedQuestionIds.includes(q.id));
+      if (!available.length) {
+        const recentGlobal = gameState.usedQuestionIds.slice(-12);
+        available = getQuestionCandidates()
+          .filter(q => !monster.usedQuestionIds.includes(q.id) && !recentGlobal.includes(q.id));
+      }
+      if (!available.length) {
+        available = questionBank
+          .map((q, i) => ({ ...q, id: `normal:${i}` }))
+          .filter(q => !monster.usedQuestionIds.includes(q.id));
+      }
+      const picked = randomItem(available.length ? available : questionBank.map((q, i) => ({ ...q, id: `normal:${i}` })));
+      markQuestionUsed(picked.id);
+      monster.usedQuestionIds.push(picked.id);
+      if (monster.usedQuestionIds.length > 6) monster.usedQuestionIds.shift();
+      return picked;
+    }
+
+    function getQuestionCandidates() {
+      const level = gameState.levelIndex + 1;
+      const allowed = level === 1 ? [1, 2] : (level === 2 ? [2, 3] : [2, 3]);
+      let candidates = questionBank
+        .map((q, i) => ({ ...q, id: `normal:${i}` }))
+        .filter(q => allowed.includes(q.difficulty || 2));
+      if (level === 1) {
+        const easy = candidates.filter(q => (q.difficulty || 2) === 1);
+        const medium = candidates.filter(q => (q.difficulty || 2) === 2);
+        candidates = Math.random() < 0.8 && easy.length ? easy : candidates;
+        if (!candidates.length) candidates = medium;
+      }
+      if (level === 2 && Math.random() < 0.72) {
+        candidates = candidates.filter(q => (q.difficulty || 2) === 2);
+      }
+      if (level === 3 && Math.random() < 0.58) {
+        candidates = candidates.filter(q => (q.difficulty || 2) === 3);
+      }
+      return candidates.length ? candidates : questionBank.map((q, i) => ({ ...q, id: `normal:${i}` }));
+    }
+
+    function generateBossQuestion() {
+      let available = bossQuestionBank
+        .map((q, i) => ({ ...q, id: `boss:${i}` }))
+        .filter(q => !gameState.usedQuestionIds.includes(q.id));
+      if (!available.length) {
+        const recentGlobal = gameState.usedQuestionIds.slice(-8);
+        available = bossQuestionBank
+          .map((q, i) => ({ ...q, id: `boss:${i}` }))
+          .filter(q => !recentGlobal.includes(q.id));
+      }
+      const picked = randomItem(available.length ? available : bossQuestionBank.map((q, i) => ({ ...q, id: `boss:${i}` })));
+      markQuestionUsed(picked.id);
+      return picked;
+    }
+
+    function markQuestionUsed(id) {
+      if (!gameState.usedQuestionIds.includes(id)) gameState.usedQuestionIds.push(id);
+      if (gameState.usedQuestionIds.length > questionBank.length + bossQuestionBank.length) {
+        gameState.usedQuestionIds = gameState.usedQuestionIds.slice(-20);
+      }
+    }
+
+    function answerQuestion(optionIndex) {
+      const pending = gameState.pendingEncounter;
+      if (!pending) return;
+      const { monster, prev, next, question } = pending;
+      const correct = optionIndex === question.answer;
+      closeModal();
+      if (correct) {
+        const beforeNumber = gameState.currentNumber;
+        const applied = applyOperation(monster.op, monster.value);
+        if (!applied) {
+          gameState.pendingEncounter = null;
+          render();
+          return;
+        }
+        const afterNumber = gameState.currentNumber;
+        recordOperation(beforeNumber, monster.op, monster.value, afterNumber);
+        flashElement("numberStat", "flash-good");
+        gameState.player = next;
+        gameState.steps++;
+        gameState.monsters = gameState.monsters.filter(m => m.id !== monster.id);
+        spawnReplacementMonster();
+        showBattleScene({
+          type: "monster",
+          result: "win",
+          title: "挑战成功！",
+          subtitle: `${beforeNumber} ${monster.op} ${monster.value} = ${afterNumber}`,
+          detailHtml: `吸收运算：${beforeNumber} ${monster.op} ${monster.value} = ${afterNumber}<br>当前能量变为 ${afterNumber}。`,
+          enemyLabel: `${monster.label} 怪物`,
+          enemyOp: monster.label,
+          actions: [
+            { text: "继续", action: () => { closeBattleOverlay(); gameState.pendingEncounter = null; render(); } }
+          ]
+        });
+      } else {
+        gameState.lives--;
+        flashElement("lifeStat", "flash-bad");
+        gameState.player = prev;
+        const detail =
+          `正确答案：${optionLabel(question.answer)}. ${formatOption(question.options[question.answer])}<br>` +
+          `<div class="battle-scroll">解析：${question.exp.replace(/\n/g, "<br>")}</div>` +
+          `生命 -1，剩余生命：${hearts(Math.max(0, gameState.lives))}。`;
+        if (gameState.lives <= 0) {
+          showBattleScene({
+            type: "monster",
+            result: "lose",
+            title: "挑战失败！",
+            subtitle: "生命已归零",
+            detailHtml: `${detail}<br>整局挑战失败。`,
+            enemyLabel: `${monster.label} 怪物`,
+            enemyOp: monster.label,
+            actions: [
+              { text: "回到开始界面", action: () => { closeBattleOverlay(); resetToStart(); } },
+              { text: "从第 1 关重来", action: () => { closeBattleOverlay(); restartRunWithCurrentCharacter(); } }
+            ]
+          });
+        } else {
+          showBattleScene({
+            type: "monster",
+            result: "lose",
+            title: "挑战失败！",
+            subtitle: "生命 -1",
+            detailHtml: detail,
+            enemyLabel: `${monster.label} 怪物`,
+            enemyOp: monster.label,
+            actions: [
+              { text: "继续", action: () => { closeBattleOverlay(); gameState.pendingEncounter = null; render(); } }
+            ]
+          });
+        }
+      }
+      render();
+    }
+
+    function applyOperation(op, value) {
+      const next = calcOperation(gameState.currentNumber, op, value);
+      if (next < 1) {
+        showToast("这个运算会让能量低于 1，无法吸收。");
+        return false;
+      }
+      if (!Number.isInteger(next)) {
+        showToast(`当前数字不能被 ${value} 整除，无法挑战这个怪物。`);
+        return false;
+      }
+      gameState.currentNumber = next;
+      return true;
+    }
+
+    function checkExit(prev) {
+      if (gameState.currentNumber !== gameState.targetNumber) {
+        gameState.player = prev;
+        showToast("数值不匹配，无法开启出口。");
+        return;
+      }
+      const result = saveLevelResult();
+      const passBody =
+        `本关步数：${result.steps}<br>` +
+        `推荐最短运算步数：${result.solutionLength}<br>` +
+        `本关评级：${result.rating} 级。`;
+      if (gameState.levelIndex < 2) {
+        showResultModal("关卡通过", `第 ${gameState.levelIndex + 1} 关通过！<br>${passBody}<br><br>下一关当前数字会重置为 1，生命继续保留。`, [
+          { text: "进入下一关", action: () => { closeModal(); startLevel(gameState.levelIndex + 1); } }
+        ]);
+      } else {
+        showResultModal("三关突破", `你已经抵达数字地宫最深处，最终守门人正在等待。<br><br>${passBody}`, [
+          { text: "进入 Boss 战", action: () => { closeModal(); enterBossScene(); } }
+        ]);
+      }
+    }
+
+    function enterBossScene() {
+      bossState.active = true;
+      bossState.question = null;
+      bossState.answered = false;
+      gameState.screen = "boss";
+      render();
+    }
+
+    function startBossChallenge() {
+      if (bossState.answered) return;
+      bossState.attempts++;
+      bossState.question = generateBossQuestion();
+      showQuestionModal(bossState.question, answerBossQuestion, "最终试炼", "答对这道题，才能离开数字地宫。");
+    }
+
+    function answerBossQuestion(optionIndex) {
+      const q = bossState.question;
+      bossState.answered = true;
+      closeModal();
+      if (optionIndex === q.answer) {
+        showBattleScene({
+          type: "boss",
+          result: "win",
+          title: "最终试炼成功！",
+          subtitle: "暗算魔王被智慧之光击败！",
+          detailHtml: "数字地宫的大门终于打开。",
+          enemyLabel: "暗算魔王",
+          enemySub: "数字地宫的最终守门人",
+          actions: [
+            { text: "查看胜利成绩", action: () => { closeBattleOverlay(); showFinalVictory(q); } }
+          ]
+        });
+      } else {
+        const detail =
+          `还差一点，再回到地宫里磨炼你的计算力吧！<br>` +
+          `正确答案：${optionLabel(q.answer)}. ${formatOption(q.options[q.answer])}<br>` +
+          `<div class="battle-scroll">解析：${q.exp.replace(/\n/g, "<br>")}</div>` +
+          `你将回到第 3 关重新挑战，生命值不会减少。`;
+        showBattleScene({
+          type: "boss",
+          result: "lose",
+          title: "最终试炼失败！",
+          subtitle: "暗算魔王守住了出口",
+          detailHtml: detail,
+          enemyLabel: "暗算魔王",
+          enemySub: "数字地宫的最终守门人",
+          actions: [
+            { text: "返回第 3 关", action: () => { closeBattleOverlay(); returnToLevelThree(); } }
+          ]
+        });
+      }
+    }
+
+    function returnToLevelThree() {
+      bossState.active = false;
+      bossState.question = null;
+      bossState.answered = false;
+      startLevel(2);
+    }
+
+    function showFinalVictory(q) {
+      const finalRating = getFinalRating();
+      const totalSteps = getTotalSteps();
+      const bossOnce = bossState.attempts === 1 ? "是" : "否";
+      const ratingsText = gameState.levelResults.map(r => r ? r.rating : "-").join(" / ");
+      const body =
+        `<div class="victory-hero"><div class="avatar">${avatarHtml(gameState.selectedCharacter, "英雄")}</div><div><strong>${gameState.selectedCharacter.name}</strong><br><strong>最终评级：${finalRating}</strong><br>暗算魔王被击败，数字地宫的大门打开。</div></div>` +
+        `<div class="summary-grid">` +
+        `<div class="summary-item"><strong>三关评级</strong><br>${ratingsText}</div>` +
+        `<div class="summary-item"><strong>总步数</strong><br>${totalSteps}</div>` +
+        `<div class="summary-item"><strong>剩余生命</strong><br>${hearts(gameState.lives)}</div>` +
+        `<div class="summary-item"><strong>Boss</strong><br>${bossOnce === "是" ? "一次通过" : "多次挑战"}</div>` +
+        `</div>` +
+        `<details class="compact-details"><summary>查看完整运算路径</summary><div class="history-summary">${buildFullHistoryHtml()}</div></details>`;
+      showResultModal("最终胜利", body, [
+        { text: "回到开始界面", action: () => resetToStart() },
+        { text: "重新挑战", action: () => restartRunWithCurrentCharacter() }
+      ]);
+    }
+
+    function recordOperation(before, op, value, after) {
+      gameState.operationHistory.push({
+        level: gameState.levelIndex + 1,
+        before,
+        op,
+        value,
+        after
+      });
+    }
+
+    function saveLevelResult() {
+      const solutionLength = gameState.hiddenPath.length;
+      const rating = calculateLevelRating(gameState.steps, solutionLength);
+      const result = {
+        level: gameState.levelIndex + 1,
+        steps: gameState.steps,
+        solutionLength,
+        rating
+      };
+      gameState.levelResults[gameState.levelIndex] = result;
+      return result;
+    }
+
+    function calculateLevelRating(steps, solutionLength) {
+      if (steps <= solutionLength + 6) return "S";
+      if (steps <= solutionLength + 12) return "A";
+      if (steps <= solutionLength + 20) return "B";
+      return "C";
+    }
+
+    function getTotalSteps() {
+      return gameState.levelResults.reduce((sum, result) => sum + (result ? result.steps : 0), 0);
+    }
+
+    function getFinalRating() {
+      const ratings = gameState.levelResults.map(result => result ? result.rating : "C");
+      const sCount = ratings.filter(r => r === "S").length;
+      const allAOrBetter = ratings.every(r => r === "S" || r === "A");
+      if (sCount >= 2 && gameState.lives >= 4 && bossState.attempts === 1) return "数学王者";
+      if ((allAOrBetter || sCount >= 1) && gameState.lives >= 2) return "地宫大师";
+      return "数字勇者";
+    }
+
+    function buildFullHistoryHtml() {
+      if (!gameState.operationHistory.length) return "还没有运算记录。";
+      return gameState.operationHistory
+        .map(item => `第 ${item.level} 关：${item.before} ${item.op} ${item.value} = ${item.after}`)
+        .join("<br>");
+    }
+
+    function restartRunWithCurrentCharacter() {
+      closeModal();
+      closeBattleOverlay();
+      gameState.lives = 5;
+      gameState.levelIndex = 0;
+      gameState.steps = 0;
+      gameState.operationHistory = [];
+      gameState.levelResults = [];
+      gameState.usedQuestionIds = [];
+      gameState.historyExpanded = false;
+      bossState.active = false;
+      bossState.question = null;
+      bossState.answered = false;
+      bossState.attempts = 0;
+      startLevel(0);
+    }
+
+    function showRulesModal() {
+      const body = `
+        <strong>《数字地宫：迷宫突围》规则说明：</strong><br><br>
+        1. 选择一个英雄开始挑战。<br>
+        2. 游戏共有 3 个连续迷宫关卡。<br>
+        3. 初始生命值为 5，生命值会跨关继承。<br>
+        4. 每关开始时，当前数字为 1。<br>
+        5. 怪物头顶有运算符，例如 +4、-3、×2、÷3。<br>
+        6. 碰到怪物后会触发数学题。<br>
+        7. 答对后执行怪物运算，改变当前数字。<br>
+        8. 答错后生命 -1，怪物保留，但下次题目会刷新。<br>
+        9. 当前数字必须等于出口目标数字，才能通过出口。<br>
+        10. 通过第 3 关后，还要战胜暗算魔王，才算最终胜利。<br>
+        11. Boss 答错不会扣生命，但会返回第 3 关重新挑战。<br>
+        12. 生命归零则整局失败。
+      `;
+      showResultModal("规则说明", body, [
+        { text: "知道了", action: () => closeModal() }
+      ]);
+    }
+
+    function showTutorialIfNeeded() {
+      let skip = false;
+      try {
+        skip = localStorage.getItem("shuziDungeonTutorialDone") === "1";
+      } catch (e) {
+        skip = gameState.tutorialDismissed;
+      }
+      if (skip) return;
+      const body = `
+        <strong>数字地宫规则</strong><br><br>
+        1. 让你的当前数字等于出口目标，才能打开地宫之门。<br>
+        2. 挑战怪物并答对题目，就能吸收它的运算，例如 ×3、+6。<br>
+        3. 生命只有 5 点，并且会连续带到三关之后的 Boss 战。<br><br>
+        <label style="display:flex;gap:6px;align-items:center;font-size:13px;">
+          <input id="skipTutorialCheck" type="checkbox"> 不再提示
+        </label>
+      `;
+      showResultModal("新手引导", body, [
+        { text: "开始冒险", action: () => {
+          const checked = document.getElementById("skipTutorialCheck")?.checked;
+          if (checked) {
+            gameState.tutorialDismissed = true;
+            try { localStorage.setItem("shuziDungeonTutorialDone", "1"); } catch (e) {}
+          }
+          closeModal();
+        } }
+      ]);
+    }
+
+    function render() {
+      document.getElementById("startScreen").classList.toggle("active", gameState.screen === "start");
+      document.getElementById("gameScreen").classList.toggle("active", gameState.screen === "game");
+      document.getElementById("bossScreen").classList.toggle("active", gameState.screen === "boss");
+      if (gameState.selectedCharacter) {
+        document.getElementById("topAvatar").innerHTML = avatarHtml(gameState.selectedCharacter, "英雄");
+        document.getElementById("topName").textContent = gameState.selectedCharacter.name;
+        document.getElementById("topTitle").textContent = gameState.selectedCharacter.title;
+        document.getElementById("bossPlayerAvatar").innerHTML = avatarHtml(gameState.selectedCharacter, "英雄");
+        document.getElementById("bossPlayerName").textContent = gameState.selectedCharacter.name;
+      }
+      document.getElementById("bossAvatar").innerHTML = `<img src="boss.png" alt="暗算魔王" onerror="this.remove(); this.parentNode.textContent='Boss';">`;
+      document.getElementById("levelStat").textContent = gameState.levelIndex + 1;
+      document.getElementById("numberStat").textContent = gameState.currentNumber;
+      document.getElementById("targetStat").textContent = gameState.targetNumber;
+      document.getElementById("lifeStat").textContent = hearts(gameState.lives);
+      document.getElementById("stepStat").textContent = gameState.steps;
+      document.getElementById("bossLife").textContent = hearts(gameState.lives);
+      document.getElementById("rulesBox").classList.toggle("show", gameState.rulesVisible);
+      document.getElementById("debugPanel").classList.toggle("show", gameState.debugVisible);
+      renderMaze();
+      renderOperationHistory();
+      renderDebug();
+    }
+
+    function renderMaze() {
+      const maze = document.getElementById("maze");
+      if (!gameState.map.length) return;
+      const size = gameState.map.length;
+      maze.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+      maze.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+      maze.innerHTML = "";
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          if (gameState.map[y][x] === 1) {
+            cell.classList.add("wall");
+            if (x === 0 || y === 0 || x === size - 1 || y === size - 1) cell.classList.add("outer-wall");
+          }
+          const monster = monsterAt(x, y);
+          if (x === gameState.exit.x && y === gameState.exit.y) {
+            cell.classList.add("exit");
+            if (gameState.currentNumber === gameState.targetNumber) cell.classList.add("exit-ready");
+            cell.innerHTML = `${doorAvatarHtml()}<span class="exit-badge">${gameState.targetNumber}</span>`;
+          }
+          if (monster) {
+            cell.classList.add("monster");
+            cell.innerHTML = `${monsterAvatarHtml(true, monster.id)}<span class="op-badge ${operationBadgeClass(monster.op)}">${monster.label}</span>`;
+          }
+          if (x === gameState.player.x && y === gameState.player.y) {
+            cell.classList.add("player");
+            cell.innerHTML = `<div class="mini-avatar">${avatarHtml(gameState.selectedCharacter, "我")}</div><span class="num-badge">${gameState.currentNumber}</span>`;
+          }
+          maze.appendChild(cell);
+        }
+      }
+    }
+
+    function renderOperationHistory() {
+      const panel = document.querySelector(".history-panel");
+      const title = document.querySelector(".history-title");
+      const list = document.getElementById("historyList");
+      if (!list) return;
+      const compact = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
+      if (panel) panel.classList.toggle("collapsed", compact && !gameState.historyExpanded);
+      if (title) title.textContent = compact ? (gameState.historyExpanded ? "运算记录（点击收起）" : "运算记录（点击展开）") : "运算记录";
+      const recent = gameState.operationHistory
+        .filter(item => item.level === gameState.levelIndex + 1)
+        .slice(-4);
+      if (!recent.length) {
+        list.innerHTML = `<div class="history-empty">还没有运算记录。</div>`;
+        return;
+      }
+      list.innerHTML = recent
+        .map(item => `<div class="history-item">${item.before} ${item.op} ${item.value} = ${item.after}</div>`)
+        .join("");
+    }
+
+    function renderDebug() {
+      const panel = document.getElementById("debugPanel");
+      if (!gameState.debugVisible) return;
+      const pathText = gameState.hiddenPath.map((s, i) => `${i + 1}. ${s.before} ${s.op} ${s.value} = ${s.after}`).join("\n");
+      const monstersText = gameState.monsters.map((m, i) => `${i + 1}. (${m.x},${m.y}) ${m.label}${m.keyMonster ? " 关键" : " 干扰"}`).join("\n");
+      const resultsText = gameState.levelResults.map((r, i) => r ? `第 ${i + 1} 关：${r.steps} 步，${r.rating} 级` : `第 ${i + 1} 关：未完成`).join("\n");
+      panel.textContent =
+        `当前关卡：${gameState.levelIndex + 1}\n` +
+        `当前数字：${gameState.currentNumber}\n` +
+        `出口目标：${gameState.targetNumber}\n` +
+        `生命：${gameState.lives}\n` +
+        `隐藏通关路径：\n${pathText}\n\n` +
+        `怪物列表：\n${monstersText}\n\n` +
+        `地图尺寸：${gameState.map.length}×${gameState.map.length}\n` +
+        `步数：${gameState.steps}\n` +
+        `所选角色：${gameState.selectedCharacter ? gameState.selectedCharacter.name : "未选择"}\n` +
+        `是否 Boss 状态：${bossState.active ? "是" : "否"}\n` +
+        `Boss 尝试次数：${bossState.attempts}\n` +
+        `本局已用题目数：${gameState.usedQuestionIds.length}\n` +
+        `关卡评级：\n${resultsText}\n\n` +
+        `完整运算历史：\n${gameState.operationHistory.map(item => `第 ${item.level} 关：${item.before} ${item.op} ${item.value} = ${item.after}`).join("\n") || "无"}`;
+    }
+
+    function showMonsterConfirmModal(monster, prev, next) {
+      const modal = document.getElementById("modal");
+      const before = gameState.currentNumber;
+      const after = calcOperation(before, monster.op, monster.value);
+      modal.innerHTML = `
+        <h2>是否挑战这个怪物？</h2>
+        <div class="challenge-preview">
+          <div class="challenge-monster">${monsterAvatarHtml()}<span class="op-badge ${operationBadgeClass(monster.op)}">${monster.label}</span></div>
+          <div class="feedback">
+            当前数字：${before}<br>
+            怪物运算：<span class="op-badge ${operationBadgeClass(monster.op)}" style="position:static;display:inline-block;">${monster.label}</span><br>
+            挑战成功后：${before} ${monster.op} ${monster.value} = ${after}<br>
+            答错会损失 1 点生命。
+          </div>
+        </div>
+        <div class="button-row" style="margin-top:14px;">
+          <button id="confirmChallengeBtn" class="primary-btn">开始挑战</button>
+          <button id="cancelChallengeBtn" class="secondary-btn">取消返回</button>
+        </div>
+      `;
+      document.getElementById("confirmChallengeBtn").addEventListener("click", () => {
+        const question = generateQuestion(monster);
+        gameState.pendingEncounter = { monster, prev, next, question };
+        closeModal();
+        showQuestionModal(question, answerQuestion, "数学挑战", `战胜这个怪物即可吸收 ${monster.label}`);
+      });
+      document.getElementById("cancelChallengeBtn").addEventListener("click", () => {
+        gameState.player = prev;
+        gameState.pendingEncounter = null;
+        closeModal();
+        render();
+      });
+      document.getElementById("modalBackdrop").classList.add("show");
+    }
+
+    function showQuestionModal(question, callback, title = "怪物挑战", subtitle = "") {
+      const modal = document.getElementById("modal");
+      modal.innerHTML = `
+        <h2>${title}</h2>
+        ${subtitle ? `<p style="margin:0 0 8px;color:#6b4c16;font-weight:800;">${subtitle}</p>` : ""}
+        <p>${question.q}</p>
+        <div class="options">
+          ${question.options.map((op, i) => `<button class="option-btn" data-option="${i}">${String.fromCharCode(65 + i)}. ${formatOption(op)}</button>`).join("")}
+        </div>
+      `;
+      modal.querySelectorAll(".option-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const picked = Number(btn.dataset.option);
+          modal.querySelectorAll(".option-btn").forEach((b, i) => {
+            b.disabled = true;
+            if (i === question.answer) b.classList.add("correct");
+            if (i === picked && picked !== question.answer) b.classList.add("wrong");
+          });
+          setTimeout(() => callback(picked), 250);
+        });
+      });
+      document.getElementById("modalBackdrop").classList.add("show");
+    }
+
+    function showBattleScene(config) {
+      const overlay = document.getElementById("battleOverlay");
+      const card = document.getElementById("battleCard");
+      const isBoss = config.type === "boss";
+      const resultWin = config.result === "win";
+      overlay.classList.toggle("boss-battle", isBoss);
+      overlay.setAttribute("aria-hidden", "false");
+      const heroClass = resultWin ? "avatar-flash" : "avatar-hit";
+      const enemyClass = resultWin ? "avatar-defeat" : "avatar-flash";
+      const enemyPortrait = isBoss
+        ? `<div class="battle-portrait boss-side ${enemyClass}"><img src="boss.png" alt="暗算魔王" onerror="this.remove(); this.parentNode.textContent='Boss';"></div>`
+        : `<div class="battle-portrait monster-side ${enemyClass}"><img src="monster.png" alt="怪物" onerror="this.remove(); this.parentNode.textContent='怪物';"></div>`;
+      card.innerHTML = `
+        <div class="battle-stage">
+          <div class="battle-side">
+            <div class="battle-portrait ${heroClass}">${avatarHtml(gameState.selectedCharacter, "英雄")}</div>
+            <div class="battle-name">${gameState.selectedCharacter ? gameState.selectedCharacter.name : "英雄"}</div>
+            <div class="battle-sub">当前能量 ${gameState.currentNumber}</div>
+          </div>
+          <div class="battle-vs">${isBoss ? "最终试炼<br>VS" : "VS"}</div>
+          <div class="battle-side">
+            ${enemyPortrait}
+            <div class="battle-name">${config.enemyLabel || (isBoss ? "暗算魔王" : "怪物")}</div>
+            <div class="battle-sub">${config.enemySub || (config.enemyOp ? `${config.enemyOp} 怪物` : "")}</div>
+          </div>
+        </div>
+        <div class="battle-result result-pop">
+          <h3>${config.title}</h3>
+          ${config.subtitle ? `<strong>${config.subtitle}</strong>` : ""}
+          <div>${config.detailHtml || ""}</div>
+        </div>
+        <div class="battle-actions"></div>
+      `;
+      const actions = card.querySelector(".battle-actions");
+      config.actions.forEach(action => {
+        const btn = document.createElement("button");
+        btn.className = "primary-btn";
+        btn.textContent = action.text;
+        btn.addEventListener("click", () => {
+          if (btn.disabled) return;
+          card.querySelectorAll("button").forEach(item => item.disabled = true);
+          action.action();
+        });
+        actions.appendChild(btn);
+      });
+      overlay.classList.add("show");
+    }
+
+    function closeBattleOverlay() {
+      const overlay = document.getElementById("battleOverlay");
+      overlay.classList.remove("show", "boss-battle");
+      overlay.setAttribute("aria-hidden", "true");
+      document.getElementById("battleCard").innerHTML = "";
+    }
+
+    function showResultModal(title, html, actions) {
+      const modal = document.getElementById("modal");
+      modal.innerHTML = `<h2>${title}</h2><div class="feedback">${html}</div><div class="button-row" style="margin-top:14px;"></div>`;
+      const row = modal.querySelector(".button-row");
+      actions.forEach(action => {
+        const btn = document.createElement("button");
+        btn.className = "primary-btn";
+        btn.textContent = action.text;
+        btn.addEventListener("click", action.action);
+        row.appendChild(btn);
+      });
+      document.getElementById("modalBackdrop").classList.add("show");
+    }
+
+    function showConfirmRestart() {
+      showResultModal("重新开始", "重新开始会回到开始界面，并恢复生命为 5。", [
+        { text: "确认重新开始", action: () => { closeBattleOverlay(); resetToStart(); } },
+        { text: "继续游戏", action: () => closeModal() }
+      ]);
+    }
+
+    function resetToStart() {
+      closeModal();
+      closeBattleOverlay();
+      gameState.screen = "start";
+      gameState.selectedCharacter = null;
+      gameState.levelIndex = 0;
+      gameState.lives = 5;
+      gameState.currentNumber = 1;
+      gameState.targetNumber = 0;
+      gameState.steps = 0;
+      gameState.map = [];
+      gameState.monsters = [];
+      gameState.hiddenPath = [];
+      gameState.operationHistory = [];
+      gameState.levelResults = [];
+      gameState.usedQuestionIds = [];
+      gameState.pendingEncounter = null;
+      gameState.debugVisible = false;
+      gameState.rulesVisible = false;
+      gameState.historyExpanded = false;
+      bossState.active = false;
+      bossState.question = null;
+      bossState.answered = false;
+      bossState.attempts = 0;
+      document.querySelectorAll(".character-card").forEach(card => card.classList.remove("selected"));
+      render();
+    }
+
+    function closeModal() {
+      document.getElementById("modalBackdrop").classList.remove("show");
+      document.getElementById("modal").innerHTML = "";
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function flashElement(id, className) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove(className);
+      void el.offsetWidth;
+      el.classList.add(className);
+      setTimeout(() => el.classList.remove(className), 520);
+    }
+
+    function handleKeyDown(e) {
+      const map = {
+        ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+        w: "up", W: "up", s: "down", S: "down", a: "left", A: "left", d: "right", D: "right"
+      };
+      if (map[e.key]) {
+        e.preventDefault();
+        handleDirectionInput(map[e.key], "keyboard");
+      }
+    }
+
+    function calcOperation(num, op, value) {
+      if (op === "+") return num + value;
+      if (op === "-") return num - value;
+      if (op === "×") return num * value;
+      if (op === "÷") return num / value;
+      return num;
+    }
+
+    function randomDistractorOperation(context = "initial") {
+      if (gameState.levelIndex === 0) return randomFriendlyOperation(context);
+      const roll = Math.random();
+      if (gameState.levelIndex === 2) {
+        if (roll < 0.3) return buildUsefulDistractor(context);
+        if (roll < 0.78) return buildPlausibleDistractor(context);
+        return buildCorrectionDistractor(context);
+      }
+      if (roll < 0.4) return buildUsefulDistractor(context);
+      if (roll < 0.8) return buildPlausibleDistractor(context);
+      return buildCorrectionDistractor(context);
+    }
+
+    function randomFriendlyOperation(context) {
+      const current = Math.max(1, gameState.currentNumber || 1);
+      const choices = [
+        { op: "+", value: randInt(3, 10) },
+        { op: "+", value: randInt(5, 12) },
+        { op: "×", value: randomItem([2, 2, 3]) }
+      ];
+      if (current > 5) choices.push({ op: "-", value: randInt(1, Math.min(4, current - 1)) });
+      if (current % 2 === 0 && current > 2 && Math.random() < 0.25) choices.push({ op: "÷", value: 2 });
+      return randomItem(choices);
+    }
+
+    function buildUsefulDistractor(context) {
+      const target = gameState.targetNumber || 60;
+      const factors = [2, 3, 4, 5].filter(n => target % n === 0);
+      const choices = [
+        { op: "+", value: clamp(randInt(Math.max(4, Math.floor(target / 8)), Math.max(8, Math.floor(target / 3))), 2, 24) },
+        { op: "×", value: randomItem(factors.length ? factors : [2, 3, 4]) },
+        { op: "÷", value: randomItem(factors.length ? factors : [2, 3]) }
+      ];
+      if (context === "replacement" && gameState.currentNumber > 8) choices.push({ op: "-", value: randInt(2, Math.min(12, gameState.currentNumber - 1)) });
+      return randomItem(choices);
+    }
+
+    function buildPlausibleDistractor(context) {
+      const target = gameState.targetNumber || 60;
+      const near = Math.max(3, Math.floor(target / randInt(5, 9)));
+      const choices = [
+        { op: "+", value: clamp(near + randInt(-3, 5), 2, 22) },
+        { op: "×", value: randomItem([2, 3, 4, 5]) },
+        { op: "÷", value: randomItem([2, 3, 4, 5]) }
+      ];
+      if (context === "replacement" && gameState.currentNumber > 6) choices.push({ op: "-", value: randInt(1, Math.min(10, gameState.currentNumber - 1)) });
+      if (context === "initial") choices.push({ op: "+", value: randInt(6, 18) });
+      return randomItem(choices);
+    }
+
+    function buildCorrectionDistractor(context) {
+      const target = gameState.targetNumber || 60;
+      if (context === "replacement" && gameState.currentNumber > target) {
+        return { op: "-", value: clamp(gameState.currentNumber - target + randInt(1, 6), 1, Math.max(1, gameState.currentNumber - 1)) };
+      }
+      if (context === "replacement" && gameState.currentNumber > 1 && gameState.currentNumber % 2 === 0 && Math.random() < 0.45) {
+        return { op: "÷", value: 2 };
+      }
+      return randomItem([
+        { op: "-", value: randInt(1, 5) },
+        { op: "+", value: randInt(3, 12) },
+        { op: "÷", value: randomItem([2, 3, 4]) }
+      ]);
+    }
+
+    function findFreeCell(used) {
+      const reachable = getReachableCells();
+      const cells = [];
+      for (let y = 1; y < gameState.map.length - 1; y++) {
+        for (let x = 1; x < gameState.map.length - 1; x++) {
+          if (gameState.map[y][x] === 0 && reachable.has(key(x, y)) && !used.has(key(x, y))) cells.push({ x, y });
+        }
+      }
+      return cells.length ? randomItem(cells) : null;
+    }
+
+    function getReachableCells() {
+      const start = gameState.player || { x: 1, y: 1 };
+      const seen = new Set([key(start.x, start.y)]);
+      const queue = [{ x: start.x, y: start.y }];
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      while (queue.length) {
+        const cur = queue.shift();
+        dirs.forEach(([dx, dy]) => {
+          const nx = cur.x + dx;
+          const ny = cur.y + dy;
+          const k = key(nx, ny);
+          if (insideMap(nx, ny) && gameState.map[ny][nx] === 0 && !seen.has(k)) {
+            seen.add(k);
+            queue.push({ x: nx, y: ny });
+          }
+        });
+      }
+      return seen;
+    }
+
+    function monsterAt(x, y) {
+      return gameState.monsters.find(m => m.x === x && m.y === y);
+    }
+
+    function insideMap(x, y) {
+      return y >= 0 && y < gameState.map.length && x >= 0 && x < gameState.map.length;
+    }
+
+    function key(x, y) {
+      return `${x},${y}`;
+    }
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function hearts(n) {
+      return "♥".repeat(Math.max(0, n)) + "♡".repeat(Math.max(0, 5 - n));
+    }
+
+    function formatOption(value) {
+      return String(value);
+    }
+
+    function optionLabel(index) {
+      return String.fromCharCode(65 + index);
+    }
+
+    function operationBadgeClass(op) {
+      if (op === "+") return "op-add";
+      if (op === "-") return "op-sub";
+      if (op === "×") return "op-mul";
+      if (op === "÷") return "op-div";
+      return "op-add";
+    }
+
+    function avatarHtml(ch, fallback) {
+      if (!ch) return fallback;
+      return `<img src="${ch.img}" alt="${ch.name}" onerror="this.remove(); this.parentNode.textContent='${fallback}';">`;
+    }
+
+    function monsterAvatarHtml(idle = false, seed = 0) {
+      const delay = idle ? ` style="animation-delay:${((Number(seed) || 0) % 1800 / 1000).toFixed(2)}s"` : "";
+      const idleClass = idle ? " monster-avatar-idle" : "";
+      return `<div class="monster-avatar${idleClass}"${delay}><img src="monster.png" alt="怪物" onerror="this.remove(); this.parentNode.textContent='怪';"></div>`;
+    }
+
+    function doorAvatarHtml() {
+      return `<div class="door-avatar"><img src="door.png" alt="出口" onerror="this.remove(); this.parentNode.classList.add('door-fallback');"></div>`;
+    }
+
+    initGame();
+  </script>
+</body>
+</html>
