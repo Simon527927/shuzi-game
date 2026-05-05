@@ -340,6 +340,27 @@
       { level: 3, size: 11, monsterCount: 7, pathMin: 7, pathMax: 8, targetMin: 60, targetMax: 120 }
     ];
 
+    const gradeConfigs = {
+      1: {
+        grade: 1,
+        label: "一年级",
+        fullLabel: "一年级 · 基础冒险",
+        desc: "适合一年级小朋友，主要是 20 以内加减法。",
+        levels: [
+          { level: 1, size: 7, monsterCount: 4, pathMin: 2, pathMax: 3, targetMin: 5, targetMax: 10 },
+          { level: 2, size: 7, monsterCount: 5, pathMin: 3, pathMax: 4, targetMin: 8, targetMax: 15 },
+          { level: 3, size: 9, monsterCount: 5, pathMin: 3, pathMax: 4, targetMin: 10, targetMax: 20 }
+        ]
+      },
+      4: {
+        grade: 4,
+        label: "四年级",
+        fullLabel: "四年级 · 策略高手",
+        desc: "当前发布版，适合四年级优秀学生。",
+        levels
+      }
+    };
+
     const questionBank = [
       { q: "36 ÷ 4 + 7 × 3 = ?", options: [30, 32, 34, 36], answer: 0, exp: "先算乘除：36 ÷ 4 = 9，7 × 3 = 21。\n再算加法：9 + 21 = 30。" },
       { q: "48 - 6 × 5 + 18 ÷ 3 = ?", options: [20, 22, 24, 26], answer: 2, exp: "先算乘除：6 × 5 = 30，18 ÷ 3 = 6。\n再算 48 - 30 + 6 = 24。" },
@@ -391,6 +412,8 @@
     questionBank.push(...buildExtraQuestionBank());
     bossQuestionBank.push(...buildExtraBossQuestionBank());
     assignQuestionDifficulties();
+    const firstGradeQuestionBank = buildFirstGradeQuestionBank();
+    const firstGradeBossQuestionBank = buildFirstGradeBossQuestionBank();
 
     function assignQuestionDifficulties() {
       questionBank.forEach((q, i) => {
@@ -417,6 +440,66 @@
       const options = unique.slice(0, 4);
       const answer = options.indexOf(String(correct));
       return { q, options, answer, exp };
+    }
+
+    function buildFirstGradeQuestionBank() {
+      const qs = [];
+      [
+        [3,4],[5,2],[6,3],[8,5],[9,4],[7,6],[2,8],[10,5],[11,6],[12,7],
+        [15,3],[14,5],[13,4],[16,2],[18,1]
+      ].forEach(([a, b]) => {
+        const correct = a + b;
+        qs.push(makeQuestion(`${a} + ${b} = ?`, correct, [correct - 1, correct + 1, correct + 2], `${a} 加 ${b}，数一数，得到 ${correct}。`));
+      });
+      [
+        [9,3],[8,5],[10,4],[12,5],[13,6],[15,7],[16,8],[18,9],[14,2],[17,6],
+        [11,4],[19,8]
+      ].forEach(([a, b]) => {
+        const correct = a - b;
+        qs.push(makeQuestion(`${a} - ${b} = ?`, correct, [correct - 1, correct + 1, correct + 2], `${a} 减去 ${b}，还剩 ${correct}。`));
+      });
+      [
+        [4,3,2], [5,5,4], [8,2,3], [9,6,5], [7,4,6], [10,3,2], [6,6,5], [12,4,3]
+      ].forEach(([a, b, c]) => {
+        const correct = a + b - c;
+        qs.push(makeQuestion(`${a} + ${b} - ${c} = ?`, correct, [correct - 1, correct + 1, correct + 2], `先算 ${a} + ${b} = ${a + b}。\n再算 ${a + b} - ${c} = ${correct}。`));
+      });
+      [
+        ["小明有 12 颗糖，吃掉 5 颗，还剩几颗？", 7, "12 - 5 = 7，所以还剩 7 颗。"],
+        ["树上有 8 只鸟，又飞来 6 只，现在有几只？", 14, "8 + 6 = 14，所以现在有 14 只。"],
+        ["盒子里有 15 支笔，拿走 4 支，还剩几支？", 11, "15 - 4 = 11，所以还剩 11 支。"],
+        ["小红有 9 朵花，又摘了 5 朵，一共有几朵？", 14, "9 + 5 = 14，所以一共有 14 朵。"],
+        ["盘子里有 16 个苹果，吃掉 7 个，还剩几个？", 9, "16 - 7 = 9，所以还剩 9 个。"]
+      ].forEach(([q, correct, exp]) => {
+        qs.push(makeQuestion(q, correct, [correct - 1, correct + 1, correct + 2], exp));
+      });
+      [
+        [16,19], [12,10], [18,15], [7,13], [20,17]
+      ].forEach(([a, b]) => {
+        const correct = Math.max(a, b);
+        qs.push(makeQuestion(`哪个数更大？${a} 和 ${b}`, correct, [Math.min(a, b), "一样大", "不能比较"], `${correct} 比 ${Math.min(a, b)} 大，所以选 ${correct}。`));
+      });
+      [
+        [2,4,6,8], [5,7,9,11], [10,9,8,7], [3,6,9,12], [1,3,5,7]
+      ].forEach(seq => {
+        const correct = seq[3];
+        qs.push(makeQuestion(`找规律：${seq[0]}，${seq[1]}，${seq[2]}，下一个数是？`, correct, [correct - 1, correct + 1, correct + 2], `前面的数按同样规律变化。\n所以下一个数是 ${correct}。`));
+      });
+      return qs.slice(0, 45);
+    }
+
+    function buildFirstGradeBossQuestionBank() {
+      return [
+        makeQuestion("9 + 6 - 4 = ?", 11, [10,12,13], "先算 9 + 6 = 15。\n再算 15 - 4 = 11。"),
+        makeQuestion("18 - 7 + 3 = ?", 14, [12,13,15], "先算 18 - 7 = 11。\n再算 11 + 3 = 14。"),
+        makeQuestion("小明有 8 颗星，又得到 7 颗，送给同学 5 颗，还剩几颗？", 10, [9,11,12], "先算 8 + 7 = 15。\n再算 15 - 5 = 10。"),
+        makeQuestion("妈妈买了 16 个橘子，吃了 6 个，又买了 4 个，现在有几个？", 14, [12,13,15], "先算 16 - 6 = 10。\n再算 10 + 4 = 14。"),
+        makeQuestion("找规律：4，6，8，10，下一个数是？", 12, [11,13,14], "每次多 2。\n10 后面是 12。"),
+        makeQuestion("哪个算式结果最大？", "9 + 8", ["10 + 5", "18 - 4", "7 + 9"], "9 + 8 = 17。\n其它结果是 15、14、16，所以 9 + 8 最大。"),
+        makeQuestion("20 - 8 - 5 = ?", 7, [6,8,9], "先算 20 - 8 = 12。\n再算 12 - 5 = 7。"),
+        makeQuestion("6 + 7 + 4 = ?", 17, [15,16,18], "先算 6 + 7 = 13。\n再算 13 + 4 = 17。"),
+        makeQuestion("小红有 14 张贴纸，给了小明 5 张，又得到 6 张，现在有几张？", 15, [13,14,16], "先算 14 - 5 = 9。\n再算 9 + 6 = 15。")
+      ];
     }
 
     function buildExtraQuestionBank() {
@@ -517,6 +600,7 @@
     const gameState = {
       screen: "start",
       selectedCharacter: null,
+      selectedGrade: null,
       levelIndex: 0,
       lives: 5,
       currentNumber: 1,
@@ -625,11 +709,55 @@
       });
     }
 
+    function getGradeConfig() {
+      return gradeConfigs[gameState.selectedGrade || 4];
+    }
+
+    function getActiveLevels() {
+      return getGradeConfig().levels;
+    }
+
+    function getGradeLabel() {
+      return gameState.selectedGrade ? getGradeConfig().label : "未选择";
+    }
+
+    function showGradeSelectModal() {
+      const modal = document.getElementById("modal");
+      modal.innerHTML = `
+        <h2>选择挑战年级</h2>
+        <div class="options">
+          ${[1, 4].map(grade => `
+            <button class="option-btn grade-option" data-grade="${grade}">
+              <strong>${gradeConfigs[grade].fullLabel}</strong><br>
+              <span style="font-size:13px;color:#5a4630;">${gradeConfigs[grade].desc}</span>
+            </button>
+          `).join("")}
+        </div>
+      `;
+      modal.querySelectorAll(".grade-option").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const grade = Number(btn.dataset.grade);
+          modal.querySelectorAll(".grade-option").forEach(item => item.classList.remove("correct"));
+          btn.classList.add("correct");
+          setTimeout(() => {
+            closeModal();
+            beginRunWithGrade(grade);
+          }, 120);
+        });
+      });
+      document.getElementById("modalBackdrop").classList.add("show");
+    }
+
     function startRun() {
       if (!gameState.selectedCharacter) {
         showToast("请先选择角色");
         return;
       }
+      showGradeSelectModal();
+    }
+
+    function beginRunWithGrade(grade) {
+      gameState.selectedGrade = grade;
       gameState.lives = 5;
       gameState.levelIndex = 0;
       gameState.steps = 0;
@@ -651,7 +779,7 @@
       gameState.pendingEncounter = null;
       gameState.operationHistory = gameState.operationHistory.filter(item => item.level !== index + 1);
       gameState.levelResults[index] = null;
-      generateLevel(levels[index]);
+      generateLevel(getActiveLevels()[index]);
       render();
     }
 
@@ -668,7 +796,7 @@
     }
 
     function generateSolvablePath(config) {
-      const ops = getPathOperationPool(config.level);
+      const ops = getPathOperationPool(config.level, gameState.selectedGrade || 4);
       for (let attempt = 0; attempt < 2000; attempt++) {
         let current = 1;
         const path = [];
@@ -692,6 +820,20 @@
         }
       }
       // 兜底路径，保证一定能得到本关范围内的目标数。
+      if ((gameState.selectedGrade || 4) === 1) {
+        const fallbackByGradeOne = {
+          1: [{op:"+",value:4},{op:"+",value:3}],
+          2: [{op:"+",value:6},{op:"+",value:4},{op:"-",value:2}],
+          3: [{op:"+",value:8},{op:"+",value:5},{op:"-",value:3}]
+        };
+        let current = 1;
+        const path = fallbackByGradeOne[config.level].map(step => {
+          const before = current;
+          current = calcOperation(current, step.op, step.value);
+          return { ...step, before, after: current };
+        });
+        return { path, target: current };
+      }
       const fallbackByLevel = {
         1: [{op:"+",value:9},{op:"×",value:3},{op:"-",value:4}],
         2: [{op:"+",value:9},{op:"×",value:4},{op:"+",value:12},{op:"÷",value:2},{op:"×",value:2}],
@@ -706,7 +848,25 @@
       return { path, target: current };
     }
 
-    function getPathOperationPool(level) {
+    function getPathOperationPool(level, grade = 4) {
+      if (grade === 1) {
+        if (level === 1) {
+          return [
+            { type: "+", values: [1,2,3,4,5] },
+            { type: "-", values: [1,2] }
+          ];
+        }
+        if (level === 2) {
+          return [
+            { type: "+", values: [1,2,3,4,5,6,7,8] },
+            { type: "-", values: [1,2,3,4,5] }
+          ];
+        }
+        return [
+          { type: "+", values: [1,2,3,4,5,6,7,8,9] },
+          { type: "-", values: [1,2,3,4,5,6] }
+        ];
+      }
       if (level === 1) {
         return [
           { type: "+", values: [4,5,6,7,8,9,10,12] },
@@ -873,6 +1033,7 @@
     }
 
     function generateQuestion(monster) {
+      const activeBank = getNormalQuestionBank();
       let available = getQuestionCandidates()
         .filter(q => !monster.usedQuestionIds.includes(q.id) && !gameState.usedQuestionIds.includes(q.id));
       if (!available.length) {
@@ -881,11 +1042,11 @@
           .filter(q => !monster.usedQuestionIds.includes(q.id) && !recentGlobal.includes(q.id));
       }
       if (!available.length) {
-        available = questionBank
-          .map((q, i) => ({ ...q, id: `normal:${i}` }))
+        available = activeBank
+          .map((q, i) => ({ ...q, id: `g${gameState.selectedGrade || 4}:normal:${i}` }))
           .filter(q => !monster.usedQuestionIds.includes(q.id));
       }
-      const picked = randomItem(available.length ? available : questionBank.map((q, i) => ({ ...q, id: `normal:${i}` })));
+      const picked = randomItem(available.length ? available : activeBank.map((q, i) => ({ ...q, id: `g${gameState.selectedGrade || 4}:normal:${i}` })));
       markQuestionUsed(picked.id);
       monster.usedQuestionIds.push(picked.id);
       if (monster.usedQuestionIds.length > 6) monster.usedQuestionIds.shift();
@@ -893,6 +1054,9 @@
     }
 
     function getQuestionCandidates() {
+      if ((gameState.selectedGrade || 4) === 1) {
+        return firstGradeQuestionBank.map((q, i) => ({ ...q, id: `g1:normal:${i}` }));
+      }
       const level = gameState.levelIndex + 1;
       const allowed = level === 1 ? [1, 2] : (level === 2 ? [2, 3] : [2, 3]);
       let candidates = questionBank
@@ -913,17 +1077,27 @@
       return candidates.length ? candidates : questionBank.map((q, i) => ({ ...q, id: `normal:${i}` }));
     }
 
+    function getNormalQuestionBank() {
+      return (gameState.selectedGrade || 4) === 1 ? firstGradeQuestionBank : questionBank;
+    }
+
+    function getBossQuestionBank() {
+      return (gameState.selectedGrade || 4) === 1 ? firstGradeBossQuestionBank : bossQuestionBank;
+    }
+
     function generateBossQuestion() {
-      let available = bossQuestionBank
-        .map((q, i) => ({ ...q, id: `boss:${i}` }))
+      const activeBossBank = getBossQuestionBank();
+      const prefix = `g${gameState.selectedGrade || 4}:boss`;
+      let available = activeBossBank
+        .map((q, i) => ({ ...q, id: `${prefix}:${i}` }))
         .filter(q => !gameState.usedQuestionIds.includes(q.id));
       if (!available.length) {
         const recentGlobal = gameState.usedQuestionIds.slice(-8);
-        available = bossQuestionBank
-          .map((q, i) => ({ ...q, id: `boss:${i}` }))
+        available = activeBossBank
+          .map((q, i) => ({ ...q, id: `${prefix}:${i}` }))
           .filter(q => !recentGlobal.includes(q.id));
       }
-      const picked = randomItem(available.length ? available : bossQuestionBank.map((q, i) => ({ ...q, id: `boss:${i}` })));
+      const picked = randomItem(available.length ? available : activeBossBank.map((q, i) => ({ ...q, id: `${prefix}:${i}` })));
       markQuestionUsed(picked.id);
       return picked;
     }
@@ -1110,7 +1284,7 @@
       const bossOnce = bossState.attempts === 1 ? "是" : "否";
       const ratingsText = gameState.levelResults.map(r => r ? r.rating : "-").join(" / ");
       const body =
-        `<div class="victory-hero"><div class="avatar">${avatarHtml(gameState.selectedCharacter, "英雄")}</div><div><strong>${gameState.selectedCharacter.name}</strong><br><strong>最终评级：${finalRating}</strong><br>暗算魔王被击败，数字地宫的大门打开。</div></div>` +
+        `<div class="victory-hero"><div class="avatar">${avatarHtml(gameState.selectedCharacter, "英雄")}</div><div><strong>${gameState.selectedCharacter.name}</strong><br><strong>最终评级：${finalRating}</strong><br>挑战年级：${getGradeLabel()}<br>暗算魔王被击败，数字地宫的大门打开。</div></div>` +
         `<div class="summary-grid">` +
         `<div class="summary-item"><strong>三关评级</strong><br>${ratingsText}</div>` +
         `<div class="summary-item"><strong>总步数</strong><br>${totalSteps}</div>` +
@@ -1220,11 +1394,17 @@
         skip = gameState.tutorialDismissed;
       }
       if (skip) return;
+      const grade = gameState.selectedGrade || 4;
+      const gradeLine = `当前挑战：${getGradeConfig().fullLabel}`;
+      const secondRule = grade === 1
+        ? "2. 挑战怪物并答对题目，就能吸收它的加减运算。"
+        : "2. 挑战怪物并答对题目，就能吸收它的运算，例如 ×3、+6。";
       const body = `
         <strong>数字地宫规则</strong><br><br>
+        ${gradeLine}<br><br>
         1. 让你的当前数字等于出口目标，才能打开地宫之门。<br>
-        2. 挑战怪物并答对题目，就能吸收它的运算，例如 ×3、+6。<br>
-        3. 生命只有 5 点，并且会连续带到三关之后的 Boss 战。<br><br>
+        ${secondRule}<br>
+        3. 生命只有 5 点，要连续通过三关和最终 Boss。<br><br>
         <label style="display:flex;gap:6px;align-items:center;font-size:13px;">
           <input id="skipTutorialCheck" type="checkbox"> 不再提示
         </label>
@@ -1253,7 +1433,7 @@
         document.getElementById("bossPlayerName").textContent = gameState.selectedCharacter.name;
       }
       document.getElementById("bossAvatar").innerHTML = `<img src="boss.png" alt="暗算魔王" onerror="this.remove(); this.parentNode.textContent='Boss';">`;
-      document.getElementById("levelStat").textContent = gameState.levelIndex + 1;
+      document.getElementById("levelStat").textContent = `${gameState.levelIndex + 1} · ${gameState.selectedGrade ? getGradeLabel() : "-"}`;
       document.getElementById("numberStat").textContent = gameState.currentNumber;
       document.getElementById("targetStat").textContent = gameState.targetNumber;
       document.getElementById("lifeStat").textContent = hearts(gameState.lives);
@@ -1331,6 +1511,8 @@
         `当前数字：${gameState.currentNumber}\n` +
         `出口目标：${gameState.targetNumber}\n` +
         `生命：${gameState.lives}\n` +
+        `当前年级：${gameState.selectedGrade ? getGradeConfig().fullLabel : "未选择"}\n` +
+        `关卡配置：${JSON.stringify(getActiveLevels()[gameState.levelIndex] || {})}\n` +
         `隐藏通关路径：\n${pathText}\n\n` +
         `怪物列表：\n${monstersText}\n\n` +
         `地图尺寸：${gameState.map.length}×${gameState.map.length}\n` +
@@ -1483,6 +1665,7 @@
       closeBattleOverlay();
       gameState.screen = "start";
       gameState.selectedCharacter = null;
+      gameState.selectedGrade = null;
       gameState.levelIndex = 0;
       gameState.lives = 5;
       gameState.currentNumber = 1;
@@ -1548,6 +1731,7 @@
     }
 
     function randomDistractorOperation(context = "initial") {
+      if ((gameState.selectedGrade || 4) === 1) return randomFirstGradeOperation(context);
       if (gameState.levelIndex === 0) return randomFriendlyOperation(context);
       const roll = Math.random();
       if (gameState.levelIndex === 2) {
@@ -1558,6 +1742,20 @@
       if (roll < 0.4) return buildUsefulDistractor(context);
       if (roll < 0.8) return buildPlausibleDistractor(context);
       return buildCorrectionDistractor(context);
+    }
+
+    function randomFirstGradeOperation(context) {
+      const current = Math.max(1, gameState.currentNumber || 1);
+      const level = gameState.levelIndex + 1;
+      const plusMax = level === 1 ? 5 : (level === 2 ? 8 : 9);
+      const minusMax = level === 1 ? 3 : (level === 2 ? 5 : 6);
+      const choices = [
+        { op: "+", value: randInt(1, plusMax) },
+        { op: "+", value: randInt(1, plusMax) }
+      ];
+      if (level > 1 && current > 2) choices.push({ op: "-", value: randInt(1, Math.min(minusMax, current - 1)) });
+      if (context === "replacement" && current > 4) choices.push({ op: "-", value: randInt(1, Math.min(minusMax, current - 1)) });
+      return randomItem(choices);
     }
 
     function randomFriendlyOperation(context) {
